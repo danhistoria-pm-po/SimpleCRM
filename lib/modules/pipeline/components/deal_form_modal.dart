@@ -16,7 +16,6 @@ class _DealFormModalState extends State<DealFormModal> {
   final _titleController = TextEditingController();
   final _customerNameController = TextEditingController();
   final _valueController = TextEditingController();
-  
   DealStage _selectedStage = DealStage.potential;
 
   @override
@@ -27,117 +26,116 @@ class _DealFormModalState extends State<DealFormModal> {
     super.dispose();
   }
 
-  void _submit() {
-    if (_formKey.currentState!.validate()) {
-      final newDeal = DealEntity(
-        id: DateTime.now().millisecondsSinceEpoch.toString(),
-        customerId: 'c_${DateTime.now().millisecondsSinceEpoch}',
-        customerName: _customerNameController.text,
-        title: _titleController.text,
-        value: double.tryParse(_valueController.text.replaceAll(',', '.')) ?? 0.0,
-        stage: _selectedStage,
-        createdAt: DateTime.now(),
-      );
-
-      widget.onSave(newDeal);
-      Navigator.of(context).pop();
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.only(
-        bottom: MediaQuery.of(context).viewInsets.bottom,
-        left: 16,
-        right: 16,
-        top: 16,
-      ),
-      child: SingleChildScrollView(
-        child: Form(
-          key: _formKey,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const Text(
-                'Nova Oportunidade',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
+    return Material(
+      color: Colors.black54,
+      child: Center(
+        child: Container(
+          width: 400,
+          padding: const EdgeInsets.all(24.0),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12.0),
+          ),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const Text(
+                  'Nova Oportunidade',
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                  textAlign: TextAlign.center,
                 ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 16),
-              TextFormField(
-                controller: _titleController,
-                decoration: const InputDecoration(
-                  labelText: 'Título do Negócio (Ex: Implantação)',
-                  border: OutlineInputBorder(),
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: _titleController,
+                  decoration: const InputDecoration(labelText: 'Título da Oportunidade'),
+                  validator: (value) => value == null || value.isEmpty ? 'Informe o título' : null,
                 ),
-                validator: (value) => value == null || value.isEmpty
-                    ? 'Informe o título do negócio'
-                    : null,
-              ),
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: _customerNameController,
-                decoration: const InputDecoration(
-                  labelText: 'Nome do Cliente / Empresa',
-                  border: OutlineInputBorder(),
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: _customerNameController,
+                  decoration: const InputDecoration(labelText: 'Nome do Cliente'),
+                  validator: (value) => value == null || value.isEmpty ? 'Informe o cliente' : null,
                 ),
-                validator: (value) => value == null || value.isEmpty
-                    ? 'Informe o nome do cliente'
-                    : null,
-              ),
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: _valueController,
-                keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                decoration: const InputDecoration(
-                  labelText: 'Valor (R\$)',
-                  border: OutlineInputBorder(),
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: _valueController,
+                  decoration: const InputDecoration(labelText: 'Valor (R\$)'),
+                  keyboardType: TextInputType.number,
+                  validator: (value) => value == null || double.tryParse(value) == null ? 'Informe um valor válido' : null,
                 ),
-                validator: (value) {
-                  if (value == null || value.isEmpty) return 'Informe o valor';
-                  if (double.tryParse(value.replaceAll(',', '.')) == null) {
-                    return 'Digite um valor numérico válido';
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 12),
-              DropdownButtonFormField<DealStage>(
-                value: _selectedStage,
-                decoration: const InputDecoration(
-                  labelText: 'Estágio Inicial',
-                  border: OutlineInputBorder(),
+                const SizedBox(height: 12),
+                DropdownButtonFormField<DealStage>(
+                  value: _selectedStage,
+                  decoration: const InputDecoration(labelText: 'Etapa Inicial'),
+                  items: DealStage.values.map((stage) {
+                    return DropdownMenuItem(
+                      value: stage,
+                      child: Text(_getStageLabel(stage)),
+                    );
+                  }).toList(),
+                  onChanged: (stage) {
+                    if (stage != null) {
+                      setState(() {
+                        _selectedStage = stage;
+                      });
+                    }
+                  },
                 ),
-                items: const [
-                  DropdownMenuItem(value: DealStage.potential, child: Text('Potencial')),
-                  DropdownMenuItem(value: DealStage.inNegotiation, child: Text('Em Negociação')),
-                  DropdownMenuItem(value: DealStage.proposalSent, child: Text('Proposta Enviada')),
-                  DropdownMenuItem(value: DealStage.activeClient, child: Text('Cliente Ativo')),
-                  DropdownMenuItem(value: DealStage.lost, child: Text('Perdido')),
-                ],
-                onChanged: (stage) {
-                  if (stage != null) setState(() => _selectedStage = stage);
-                },
-              ),
-              const SizedBox(height: 20),
-              ElevatedButton.icon(
-                onPressed: _submit,
-                icon: const Icon(Icons.save),
-                label: const Text('Salvar Oportunidade'),
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 12),
+                const SizedBox(height: 24),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    TextButton(
+                      onPressed: () => Navigator.of(context).pop(),
+                      child: const Text('Cancelar'),
+                    ),
+                    const SizedBox(width: 8),
+                    ElevatedButton(
+                      onPressed: () {
+                        if (_formKey.currentState!.validate()) {
+                          final newDeal = DealEntity(
+                            id: '',
+                            customerId: '',
+                            title: _titleController.text,
+                            customerName: _customerNameController.text,
+                            value: double.tryParse(_valueController.text) ?? 0.0,
+                            stage: _selectedStage,
+                            createdAt: DateTime.now(),
+                          );
+                          
+                          widget.onSave(newDeal);
+                          Navigator.of(context).pop();
+                        }
+                      },
+                      child: const Text('Salvar'),
+                    ),
+                  ],
                 ),
-              ),
-              const SizedBox(height: 16),
-            ],
+              ],
+            ),
           ),
         ),
       ),
     );
+  }
+
+  String _getStageLabel(DealStage stage) {
+    switch (stage) {
+      case DealStage.potential:
+        return 'Potencial';
+      case DealStage.inNegotiation:
+        return 'Em Negociação';
+      case DealStage.proposalSent:
+        return 'Proposta Enviada';
+      case DealStage.activeClient:
+        return 'Cliente Ativo';
+      case DealStage.lost:
+        return 'Perdido';
+    }
   }
 }

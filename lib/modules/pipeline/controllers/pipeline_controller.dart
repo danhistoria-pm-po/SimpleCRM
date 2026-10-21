@@ -1,74 +1,71 @@
 // lib/modules/pipeline/controllers/pipeline_controller.dart
-import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import '../models/deal_entity.dart';
+import '../repositories/pipeline_repository.dart';
 
 class PipelineController extends ChangeNotifier {
-  final List<DealEntity> _deals = [
-    DealEntity(
-      id: '1',
-      customerId: 'c1',
-      customerName: 'Empresa Alpha Ltda',
-      title: 'Implantação do Sistema',
-      value: 4500.00,
-      stage: DealStage.potential,
-      createdAt: DateTime.now().subtract(const Duration(days: 2)),
-    ),
-    DealEntity(
-      id: '2',
-      customerId: 'c2',
-      customerName: 'Comércio Beta',
-      title: 'Renovação de Licença',
-      value: 1200.00,
-      stage: DealStage.inNegotiation,
-      createdAt: DateTime.now().subtract(const Duration(days: 5)),
-    ),
-    DealEntity(
-      id: '3',
-      customerId: 'c3',
-      customerName: 'Supermercado Delta',
-      title: 'Módulo Fiscal Avançado',
-      value: 3200.00,
-      stage: DealStage.proposalSent,
-      createdAt: DateTime.now().subtract(const Duration(days: 4)),
-    ),
-    DealEntity(
-      id: '4',
-      customerId: 'c4',
-      customerName: 'Distribuidora Gama',
-      title: 'Pacote Enterprise',
-      value: 12500.00,
-      stage: DealStage.activeClient,
-      createdAt: DateTime.now().subtract(const Duration(days: 10)),
-    ),
-    DealEntity(
-      id: '5',
-      customerId: 'c5',
-      customerName: 'Loja Omega',
-      title: 'Consultoria Básica',
-      value: 800.00,
-      stage: DealStage.lost,
-      createdAt: DateTime.now().subtract(const Duration(days: 8)),
-    ),
-  ];
+  final PipelineRepository _repository = PipelineRepository();
 
+  List<DealEntity> _deals = [];
+  bool _isLoading = false;
   String _searchQuery = '';
-  DealStage? _filterStage;
+  DealStage? _selectedStageFilter;
 
+  List<DealEntity> get deals {
+    var filtered = _deals;
+
+    // Filtro por texto (título ou nome do cliente)
+    if (_searchQuery.isNotEmpty) {
+      filtered = filtered.where((deal) =>
+          deal.title.toLowerCase().contains(_searchQuery.toLowerCase()) ||
+          deal.customerName.toLowerCase().contains(_searchQuery.toLowerCase())).toList();
+    }
+
+    // Filtro por estágio selecionado
+    if (_selectedStageFilter != null) {
+      filtered = filtered.where((deal) => deal.stage == _selectedStageFilter).toList();
+    }
+
+    return filtered;
+  }
+
+  bool get isLoading => _isLoading;
   String get searchQuery => _searchQuery;
-  DealStage? get filterStage => _filterStage;
+  DealStage? get selectedStageFilter => _selectedStageFilter;
 
-  List<DealEntity> getDealsByStage(DealStage stage) {
-    return _deals.where((deal) {
-      final matchesStage = deal.stage == stage;
-      final matchesGlobalStageFilter = _filterStage == null || deal.stage == _filterStage;
+  // Carregar oportunidades do Supabase
+  Future<void> loadDeals() async {
+    _isLoading = true;
+    notifyListeners();
 
-      final query = _searchQuery.toLowerCase();
-      final matchesSearch = query.isEmpty ||
-          deal.customerName.toLowerCase().contains(query) ||
-          deal.title.toLowerCase().contains(query);
+    try {
+      _deals = await _repository.fetchDeals();
+    } catch (e) {
+      debugPrint('Erro ao carregar do Supabase: $e');
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
 
-      return matchesStage && matchesGlobalStageFilter && matchesSearch;
-    }).toList();
+  // Adicionar nova oportunidade direto no Supabase
+  Future<void> addDeal(DealEntity deal) async {
+    try {
+      await _repository.createDeal(deal);
+      await loadDeals(); // Recarrega a lista atualizada da nuvem
+    } catch (e) {
+      debugPrint('Erro ao criar oportunidade: $e');
+    }
+  }
+
+  // Mover o estágio de uma oportunidade no Supabase
+  Future<void> updateDealStage(String id, DealStage newStage) async {
+    try {
+      await _repository.updateDealStage(id, newStage);
+      await loadDeals(); // Recarrega a lista atualizada
+    } catch (e) {
+      debugPrint('Erro ao atualizar estágio: $e');
+    }
   }
 
   void setSearchQuery(String query) {
@@ -76,26 +73,8 @@ class PipelineController extends ChangeNotifier {
     notifyListeners();
   }
 
-  void setFilterStage(DealStage? stage) {
-    _filterStage = stage;
-    notifyListeners();
-  }
-
-  void addDeal(DealEntity deal) {
-    _deals.add(deal);
-    notifyListeners();
-  }
-
-  void updateDealStage(String dealId, DealStage newStage) {
-    final index = _deals.indexWhere((d) => d.id == dealId);
-    if (index != -1) {
-      _deals[index] = _deals[index].copyWith(stage: newStage);
-      notifyListeners();
-    }
-  }
-
-  void deleteDeal(String dealId) {
-    _deals.removeWhere((d) => d.id == dealId);
+  void setStageFilter(DealStage? stage) {
+    _selectedStageFilter = stage;
     notifyListeners();
   }
 }

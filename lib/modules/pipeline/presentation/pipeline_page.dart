@@ -15,124 +15,113 @@ class PipelinePage extends StatefulWidget {
 class _PipelinePageState extends State<PipelinePage> {
   final PipelineController _controller = PipelineController();
 
-  void _openNewDealModal(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      builder: (context) => DealFormModal(
-        onSave: (newDeal) {
-          _controller.addDeal(newDeal);
-        },
-      ),
-    );
+  @override
+  void initState() {
+    super.initState();
+    _controller.loadDeals(); // Carrega os dados do Supabase ao iniciar
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Funil de Vendas (Pipeline)'),
+        title: const Text('SimpleCRM - Funil de Vendas'),
         actions: [
           IconButton(
-            icon: const Icon(Icons.add),
-            tooltip: 'Nova Oportunidade',
-            onPressed: () => _openNewDealModal(context),
+            icon: const Icon(Icons.refresh),
+            onPressed: () => _controller.loadDeals(),
           ),
         ],
       ),
-      body: ListenableBuilder(
-        listenable: _controller,
-        builder: (context, _) {
+      body: AnimatedBuilder(
+        animation: _controller,
+        builder: (context, child) {
+          if (_controller.isLoading) {
+            return const Center(child: CircularProgressIndicator());
+          }
+
           return Column(
             children: [
-              // 🔍 Barra de Filtros Avançados
+              // Barra de Pesquisa e Filtros
               Padding(
-                padding: const EdgeInsets.all(16.0),
+                padding: const EdgeInsets.all(12.0),
                 child: Row(
                   children: [
                     Expanded(
-                      flex: 2,
                       child: TextField(
-                        onChanged: _controller.setSearchQuery,
-                        decoration: InputDecoration(
-                          hintText: 'Buscar por cliente ou título...',
-                          prefixIcon: const Icon(Icons.search),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
+                        onChanged: (value) => _controller.setSearchQuery(value),
+                        decoration: const InputDecoration(
+                          hintText: 'Pesquisar por título ou cliente...',
+                          prefixIcon: Icon(Icons.search),
+                          border: OutlineInputBorder(),
                           isDense: true,
                         ),
                       ),
                     ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      flex: 1,
-                      child: DropdownButtonFormField<DealStage?>(
-                        value: _controller.filterStage,
-                        decoration: InputDecoration(
-                          labelText: 'Filtrar Estágio',
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          isDense: true,
+                    const SizedBox(width: 12),
+                    DropdownButton<DealStage?>(
+                      value: _controller.selectedStageFilter,
+                      hint: const Text('Filtrar Etapa'),
+                      items: [
+                        const DropdownMenuItem(
+                          value: null,
+                          child: Text('Todas as Etapas'),
                         ),
-                        items: const [
-                          DropdownMenuItem(value: null, child: Text('Todos')),
-                          DropdownMenuItem(value: DealStage.potential, child: Text('Potencial')),
-                          DropdownMenuItem(value: DealStage.inNegotiation, child: Text('Em Negociação')),
-                          DropdownMenuItem(value: DealStage.proposalSent, child: Text('Proposta Enviada')),
-                          DropdownMenuItem(value: DealStage.activeClient, child: Text('Cliente Ativo')),
-                          DropdownMenuItem(value: DealStage.lost, child: Text('Perdido')),
-                        ],
-                        onChanged: _controller.setFilterStage,
-                      ),
+                        ...DealStage.values.map((stage) {
+                          return DropdownMenuItem(
+                            value: stage,
+                            child: Text(_getStageLabel(stage)),
+                          );
+                        }),
+                      ],
+                      onChanged: (stage) => _controller.setStageFilter(stage),
                     ),
                   ],
                 ),
               ),
 
-              // 📊 Painel Kanban (5 Colunas de Estágios)
+              // Visualização Kanban das Colunas do Funil
               Expanded(
                 child: SingleChildScrollView(
                   scrollDirection: Axis.horizontal,
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  padding: const EdgeInsets.symmetric(horizontal: 12.0),
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       PipelineColumn(
                         title: 'Potencial',
                         stage: DealStage.potential,
-                        deals: _controller.getDealsByStage(DealStage.potential),
+                        deals: _controller.deals.where((d) => d.stage == DealStage.potential).toList(),
                         headerColor: Colors.blueAccent,
-                        onStageChanged: _controller.updateDealStage,
+                        onStageChanged: (id, newStage) => _controller.updateDealStage(id, newStage),
                       ),
                       PipelineColumn(
                         title: 'Em Negociação',
                         stage: DealStage.inNegotiation,
-                        deals: _controller.getDealsByStage(DealStage.inNegotiation),
+                        deals: _controller.deals.where((d) => d.stage == DealStage.inNegotiation).toList(),
                         headerColor: Colors.orangeAccent,
-                        onStageChanged: _controller.updateDealStage,
+                        onStageChanged: (id, newStage) => _controller.updateDealStage(id, newStage),
                       ),
                       PipelineColumn(
                         title: 'Proposta Enviada',
                         stage: DealStage.proposalSent,
-                        deals: _controller.getDealsByStage(DealStage.proposalSent),
+                        deals: _controller.deals.where((d) => d.stage == DealStage.proposalSent).toList(),
                         headerColor: Colors.purpleAccent,
-                        onStageChanged: _controller.updateDealStage,
+                        onStageChanged: (id, newStage) => _controller.updateDealStage(id, newStage),
                       ),
                       PipelineColumn(
                         title: 'Cliente Ativo',
                         stage: DealStage.activeClient,
-                        deals: _controller.getDealsByStage(DealStage.activeClient),
+                        deals: _controller.deals.where((d) => d.stage == DealStage.activeClient).toList(),
                         headerColor: Colors.green,
-                        onStageChanged: _controller.updateDealStage,
+                        onStageChanged: (id, newStage) => _controller.updateDealStage(id, newStage),
                       ),
                       PipelineColumn(
                         title: 'Perdido',
                         stage: DealStage.lost,
-                        deals: _controller.getDealsByStage(DealStage.lost),
+                        deals: _controller.deals.where((d) => d.stage == DealStage.lost).toList(),
                         headerColor: Colors.redAccent,
-                        onStageChanged: _controller.updateDealStage,
+                        onStageChanged: (id, newStage) => _controller.updateDealStage(id, newStage),
                       ),
                     ],
                   ),
@@ -142,6 +131,35 @@ class _PipelinePageState extends State<PipelinePage> {
           );
         },
       ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () {
+          showDialog(
+            context: context,
+            builder: (context) => DealFormModal(
+              onSave: (newDeal) async {
+                await _controller.addDeal(newDeal);
+              },
+            ),
+          );
+        },
+        label: const Text('Nova Oportunidade'),
+        icon: const Icon(Icons.add),
+      ),
     );
+  }
+
+  String _getStageLabel(DealStage stage) {
+    switch (stage) {
+      case DealStage.potential:
+        return 'Potencial';
+      case DealStage.inNegotiation:
+        return 'Em Negociação';
+      case DealStage.proposalSent:
+        return 'Proposta Enviada';
+      case DealStage.activeClient:
+        return 'Cliente Ativo';
+      case DealStage.lost:
+        return 'Perdido';
+    }
   }
 }
