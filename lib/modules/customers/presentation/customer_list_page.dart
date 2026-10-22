@@ -1,8 +1,7 @@
 // lib/modules/customers/presentation/customer_list_page.dart
-
 import 'package:flutter/material.dart';
 import 'customer_controller.dart';
-import 'customer_form_modal.dart'; // <--- Importamos o nosso novo modal
+import 'customer_form_modal.dart';
 
 class CustomerListPage extends StatefulWidget {
   const CustomerListPage({super.key});
@@ -11,14 +10,13 @@ class CustomerListPage extends StatefulWidget {
   State<CustomerListPage> createState() => _CustomerListPageState();
 }
 
-class _CustomerListPageState extends State<CustomerListPage> {
+class _CustomerListPageState extends State<CustomerListPage>
+    with AutomaticKeepAliveClientMixin {
+  
   final CustomerController _controller = CustomerController();
 
   @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
+  bool get wantKeepAlive => true; // Mantém o estado vivo ao trocar de aba na BottomNavigationBar
 
   void _showAddCustomerDialog() {
     showDialog(
@@ -41,6 +39,8 @@ class _CustomerListPageState extends State<CustomerListPage> {
 
   @override
   Widget build(BuildContext context) {
+    super.build(context); // Obrigatório para o AutomaticKeepAliveClientMixin
+    
     return Scaffold(
       appBar: AppBar(
         title: const Text('SimpleCRM - Clientes'),

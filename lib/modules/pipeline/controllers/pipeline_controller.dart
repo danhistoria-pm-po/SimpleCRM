@@ -4,6 +4,17 @@ import '../models/deal_entity.dart';
 import '../repositories/pipeline_repository.dart';
 
 class PipelineController extends ChangeNotifier {
+  // Padrão Singleton para manter o estado e os dados vivos entre as abas
+  static final PipelineController _instance = PipelineController._internal();
+
+  factory PipelineController() {
+    return _instance;
+  }
+
+  PipelineController._internal() {
+    loadDeals(); // Carrega os dados automaticamente ao inicializar
+  }
+
   final PipelineRepository _repository = PipelineRepository();
 
   List<DealEntity> _deals = [];
@@ -40,21 +51,24 @@ class PipelineController extends ChangeNotifier {
 
     try {
       _deals = await _repository.fetchDeals();
+      debugPrint('Deals carregados com sucesso: ${_deals.length} itens.');
     } catch (e) {
-      debugPrint('Erro ao carregar do Supabase: $e');
+      debugPrint('ERRO AO CARREGAR DO SUPABASE: $e');
     } finally {
       _isLoading = false;
       notifyListeners();
     }
   }
 
-  // Adicionar nova oportunidade direto no Supabase
+  // Adicionar nova oportunidade direto no Supabase com log visível
   Future<void> addDeal(DealEntity deal) async {
     try {
+      debugPrint('A tentar guardar deal: ${deal.title} | Cliente: ${deal.customerName} | Valor: ${deal.value}');
       await _repository.createDeal(deal);
       await loadDeals(); // Recarrega a lista atualizada da nuvem
+      debugPrint('Oportunidade guardada com sucesso no Supabase!');
     } catch (e) {
-      debugPrint('Erro ao criar oportunidade: $e');
+      debugPrint('ERRO EXATO DO SUPABASE AO CRIAR OPORTUNIDADE: $e');
     }
   }
 
