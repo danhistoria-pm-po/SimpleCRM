@@ -4,6 +4,7 @@ import '../../modules/pipeline/presentation/pipeline_page.dart';
 import '../../modules/customers/presentation/customer_list_page.dart';
 import '../../modules/billing/presentation/billing_page.dart';
 import '../../modules/cash_flow/presentation/cash_flow_page.dart';
+import '../../features/follow_up/views/follow_up_view.dart'; // Importação da Sprint 5
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -15,22 +16,13 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   int _currentIndex = 0;
 
-  // Lista com todos os ecrãs do SimpleCRM (incluindo o espaço reservado para a Sprint 5)
-  final List<Widget> _pages = [
-    const PipelinePage(),
-    const CustomerListPage(),
-    const BillingPage(),
-    const CashFlowPage(),
-    // Placeholder temporário para a Sprint 5 (Pós-Venda)
-    const Scaffold(
-      body: Center(
-        child: Text(
-          'Sprint 5 – Pós-Venda & Satisfação\n(Em Breve)',
-          textAlign: TextAlign.center,
-          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.grey),
-        ),
-      ),
-    ),
+  // Lista com todos os ecrãs oficiais do SimpleCRM integrados por sprint
+  final List<Widget> _pages = const [
+    PipelinePage(),
+    CustomerListPage(),
+    BillingPage(),
+    CashFlowPage(),
+    FollowUpView(), // Sprint 5 integrada e limpa
   ];
 
   @override
