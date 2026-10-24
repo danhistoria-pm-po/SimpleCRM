@@ -1,11 +1,17 @@
 // lib/modules/pipeline/components/deal_form_modal.dart
 import 'package:flutter/material.dart';
+import '../../customers/presentation/customer_controller.dart';
 import '../models/deal_entity.dart';
 
 class DealFormModal extends StatefulWidget {
   final Function(DealEntity) onSave;
+  final CustomerController customerController;
 
-  const DealFormModal({super.key, required this.onSave});
+  const DealFormModal({
+    super.key,
+    required this.onSave,
+    required this.customerController,
+  });
 
   @override
   State<DealFormModal> createState() => _DealFormModalState();
@@ -14,14 +20,14 @@ class DealFormModal extends StatefulWidget {
 class _DealFormModalState extends State<DealFormModal> {
   final _formKey = GlobalKey<FormState>();
   final _titleController = TextEditingController();
-  final _customerNameController = TextEditingController();
   final _valueController = TextEditingController();
+  
+  dynamic _selectedCustomer;
   DealStage _selectedStage = DealStage.potential;
 
   @override
   void dispose() {
     _titleController.dispose();
-    _customerNameController.dispose();
     _valueController.dispose();
     super.dispose();
   }
@@ -56,15 +62,45 @@ class _DealFormModalState extends State<DealFormModal> {
                   validator: (value) => value == null || value.isEmpty ? 'Informe o título' : null,
                 ),
                 const SizedBox(height: 12),
-                TextFormField(
-                  controller: _customerNameController,
-                  decoration: const InputDecoration(labelText: 'Nome do Cliente'),
-                  validator: (value) => value == null || value.isEmpty ? 'Informe o cliente' : null,
+                
+                // Seletor Dinâmico de Clientes Cadastrados
+                AnimatedBuilder(
+                  animation: widget.customerController,
+                  builder: (context, child) {
+                    final customers = widget.customerController.customers;
+
+                    if (customers.isEmpty) {
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 8.0),
+                        child: Text(
+                          'Nenhum cliente cadastrado. Cadastre um cliente primeiro na aba Clientes.',
+                          style: TextStyle(color: Colors.red.shade700, fontSize: 12),
+                        ),
+                      );
+                    }
+
+                    return DropdownButtonFormField<dynamic>(
+                      value: _selectedCustomer,
+                      decoration: const InputDecoration(labelText: 'Selecione o Cliente'),
+                      items: customers.map((customer) {
+                        return DropdownMenuItem<dynamic>(
+                          value: customer,
+                          child: Text(customer.name),
+                        );
+                      }).toList(),
+                      onChanged: (customer) {
+                        setState(() {
+                          _selectedCustomer = customer;
+                        });
+                      },
+                      validator: (value) => value == null ? 'Selecione um cliente' : null,
+                    );
+                  },
                 ),
                 const SizedBox(height: 12),
                 TextFormField(
                   controller: _valueController,
-                  decoration: const InputDecoration(labelText: 'Valor (R\$)'),
+                  decoration: InputDecoration(labelText: 'Valor (R\$)'),
                   keyboardType: TextInputType.number,
                   validator: (value) => value == null || double.tryParse(value) == null ? 'Informe um valor válido' : null,
                 ),
@@ -97,17 +133,17 @@ class _DealFormModalState extends State<DealFormModal> {
                     const SizedBox(width: 8),
                     ElevatedButton(
                       onPressed: () {
-                        if (_formKey.currentState!.validate()) {
+                        if (_formKey.currentState!.validate() && _selectedCustomer != null) {
                           final newDeal = DealEntity(
                             id: '',
-                            customerId: '',
+                            customerId: _selectedCustomer.id,
+                            customerName: _selectedCustomer.name,
                             title: _titleController.text,
-                            customerName: _customerNameController.text,
                             value: double.tryParse(_valueController.text) ?? 0.0,
                             stage: _selectedStage,
                             createdAt: DateTime.now(),
                           );
-                          
+
                           widget.onSave(newDeal);
                           Navigator.of(context).pop();
                         }

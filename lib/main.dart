@@ -1,13 +1,13 @@
 // lib/main.dart
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'modules/pipeline/presentation/pipeline_page.dart';
+import 'home_page.dart';
 
 Future<void> main() async {
   // Garante que os bindings do Flutter estão prontos antes de inicializar serviços externos
   WidgetsFlutterBinding.ensureInitialized();
 
-  // TODO: Substitua pelas suas credenciais reais do Supabase (URL e Anon Key)
+  // Inicialização do Supabase com as credenciais do projeto
   await Supabase.initialize(
     url: 'https://cmvkanmyrhoxuprlpexh.supabase.co',
     publishableKey: 'sb_publishable_KsrWncim4nyX3ctKl9fKeA_yNKXwqa2',
@@ -28,7 +28,7 @@ class SimpleCRMApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.indigo),
         useMaterial3: true,
       ),
-      home: const PipelinePage(),
+      home: const HomePage(),
     );
   }
 }

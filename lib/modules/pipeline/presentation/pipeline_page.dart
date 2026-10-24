@@ -1,9 +1,10 @@
 // lib/modules/pipeline/presentation/pipeline_page.dart
 import 'package:flutter/material.dart';
+import '../../customers/presentation/customer_controller.dart';
 import '../controllers/pipeline_controller.dart';
 import '../models/deal_entity.dart';
-import '../components/pipeline_column.dart';
 import '../components/deal_form_modal.dart';
+import '../components/pipeline_column.dart';
 
 class PipelinePage extends StatefulWidget {
   const PipelinePage({super.key});
@@ -14,11 +15,13 @@ class PipelinePage extends StatefulWidget {
 
 class _PipelinePageState extends State<PipelinePage> {
   final PipelineController _controller = PipelineController();
+  final CustomerController _customerController = CustomerController();
 
   @override
   void initState() {
     super.initState();
-    _controller.loadDeals(); // Carrega os dados do Supabase ao iniciar
+    _controller.loadDeals();
+    _customerController.loadCustomers(); // Garante o carregamento dos clientes cadastrados
   }
 
   @override
@@ -29,12 +32,15 @@ class _PipelinePageState extends State<PipelinePage> {
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
-            onPressed: () => _controller.loadDeals(),
+            onPressed: () {
+              _controller.loadDeals();
+              _customerController.loadCustomers();
+            },
           ),
         ],
       ),
       body: AnimatedBuilder(
-        animation: _controller,
+        animation: Listenable.merge([_controller, _customerController]),
         builder: (context, child) {
           if (_controller.isLoading) {
             return const Center(child: CircularProgressIndicator());
@@ -51,7 +57,7 @@ class _PipelinePageState extends State<PipelinePage> {
                       child: TextField(
                         onChanged: (value) => _controller.setSearchQuery(value),
                         decoration: const InputDecoration(
-                          hintText: 'Pesquisar por título ou cliente...',
+                          labelText: 'Pesquisar por título ou cliente...',
                           prefixIcon: Icon(Icons.search),
                           border: OutlineInputBorder(),
                           isDense: true,
@@ -79,7 +85,7 @@ class _PipelinePageState extends State<PipelinePage> {
                   ],
                 ),
               ),
-
+              
               // Visualização Kanban das Colunas do Funil
               Expanded(
                 child: SingleChildScrollView(
@@ -136,6 +142,7 @@ class _PipelinePageState extends State<PipelinePage> {
           showDialog(
             context: context,
             builder: (context) => DealFormModal(
+              customerController: _customerController,
               onSave: (newDeal) async {
                 await _controller.addDeal(newDeal);
               },
