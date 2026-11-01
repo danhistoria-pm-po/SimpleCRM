@@ -14,14 +14,12 @@ class PipelineController extends ChangeNotifier {
   List<DealEntity> get deals {
     var filtered = _deals;
 
-    // Filtro por texto (título ou nome do cliente)
     if (_searchQuery.isNotEmpty) {
       filtered = filtered.where((deal) =>
           deal.title.toLowerCase().contains(_searchQuery.toLowerCase()) ||
           deal.customerName.toLowerCase().contains(_searchQuery.toLowerCase())).toList();
     }
 
-    // Filtro por estágio selecionado
     if (_selectedStageFilter != null) {
       filtered = filtered.where((deal) => deal.stage == _selectedStageFilter).toList();
     }
@@ -33,7 +31,6 @@ class PipelineController extends ChangeNotifier {
   String get searchQuery => _searchQuery;
   DealStage? get selectedStageFilter => _selectedStageFilter;
 
-  // Carregar oportunidades do Supabase
   Future<void> loadDeals() async {
     _isLoading = true;
     notifyListeners();
@@ -42,29 +39,42 @@ class PipelineController extends ChangeNotifier {
       _deals = await _repository.fetchDeals();
     } catch (e) {
       debugPrint('Erro ao carregar do Supabase: $e');
+      rethrow; // CORRIGIDO: Repassa o erro para a tela
     } finally {
       _isLoading = false;
       notifyListeners();
     }
   }
 
-  // Adicionar nova oportunidade direto no Supabase
   Future<void> addDeal(DealEntity deal) async {
     try {
       await _repository.createDeal(deal);
-      await loadDeals(); // Recarrega a lista atualizada da nuvem
+      await loadDeals();
     } catch (e) {
       debugPrint('Erro ao criar oportunidade: $e');
+      rethrow; // CORRIGIDO: Repassa o erro para a tela
     }
   }
 
-  // Mover o estágio de uma oportunidade no Supabase
   Future<void> updateDealStage(String id, DealStage newStage) async {
     try {
       await _repository.updateDealStage(id, newStage);
-      await loadDeals(); // Recarrega a lista atualizada
+      await loadDeals();
     } catch (e) {
       debugPrint('Erro ao atualizar estágio: $e');
+      rethrow; // CORRIGIDO: Repassa o erro para a tela
+    }
+  }
+
+  // Método de exclusão independente direto no Kanban
+  Future<void> deleteDeal(String id) async {
+    try {
+      await _repository.deleteDeal(id);
+      _deals.removeWhere((deal) => deal.id == id);
+      notifyListeners();
+    } catch (e) {
+      debugPrint('Erro ao deletar oportunidade: $e');
+      rethrow; // CORRIGIDO: Repassa o erro para a tela
     }
   }
 

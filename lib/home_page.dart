@@ -2,10 +2,6 @@
 import 'package:flutter/material.dart';
 import 'modules/pipeline/presentation/pipeline_page.dart';
 import 'modules/customers/presentation/customer_list_page.dart';
-// Importe aqui as páginas das outras abas conforme os arquivos existentes no seu projeto:
-// import 'modules/billing/presentation/billing_page.dart';
-// import 'modules/cashflow/presentation/cash_flow_page.dart';
-// import 'modules/follow_up/presentation/follow_up_page.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -20,8 +16,8 @@ class _HomePageState extends State<HomePage> {
   // Lista de páginas correspondentes às abas inferiores
   final List<Widget> _pages = [
     const PipelinePage(),
-    const CustomerListPage(), // Certifique-se de usar a classe de listagem de clientes do seu módulo
-    // Placeholders temporários caso as outras páginas ainda usem nomes diferentes de rota:
+    const CustomerListPage(),
+    // Placeholders temporários para as abas que ainda serão construídas
     const Scaffold(body: Center(child: Text('Gestão de Faturamento & Notas Fiscais'))),
     const Scaffold(body: Center(child: Text('Fluxo de Caixa Simples'))),
     const Scaffold(body: Center(child: Text('Pós-Venda & Follow-up'))),
@@ -30,6 +26,7 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      // O IndexedStack mantém o estado das páginas vivas enquanto você navega
       body: IndexedStack(
         index: _currentIndex,
         children: _pages,

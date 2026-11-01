@@ -9,6 +9,7 @@ class PipelineColumn extends StatelessWidget {
   final List<DealEntity> deals;
   final Color headerColor;
   final Function(String, DealStage) onStageChanged;
+  final Function(String) onDelete; // Novo callback para exclusão
 
   const PipelineColumn({
     super.key,
@@ -17,6 +18,7 @@ class PipelineColumn extends StatelessWidget {
     required this.deals,
     required this.headerColor,
     required this.onStageChanged,
+    required this.onDelete,
   });
 
   @override
@@ -73,6 +75,7 @@ class PipelineColumn extends StatelessWidget {
                 return DealCard(
                   deal: deal,
                   onStageChanged: (newStage) => onStageChanged(deal.id, newStage),
+                  onDelete: (dealId) => onDelete(dealId),
                 );
               },
             ),

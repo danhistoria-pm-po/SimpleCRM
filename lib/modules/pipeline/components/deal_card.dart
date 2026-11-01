@@ -5,11 +5,13 @@ import '../models/deal_entity.dart';
 class DealCard extends StatelessWidget {
   final DealEntity deal;
   final Function(DealStage) onStageChanged;
+  final Function(String) onDelete;
 
   const DealCard({
     super.key,
     required this.deal,
     required this.onStageChanged,
+    required this.onDelete,
   });
 
   @override
@@ -51,11 +53,17 @@ class DealCard extends StatelessWidget {
                 SizedBox(
                   height: 24,
                   width: 24,
-                  child: PopupMenuButton<DealStage>(
+                  child: PopupMenuButton<Object>(
                     padding: EdgeInsets.zero,
                     icon: const Icon(Icons.swap_horiz, size: 16),
-                    tooltip: 'Mover Estágio',
-                    onSelected: onStageChanged,
+                    tooltip: 'Opções da Oportunidade',
+                    onSelected: (value) {
+                      if (value == 'delete') {
+                        onDelete(deal.id);
+                      } else if (value is DealStage) {
+                        onStageChanged(value);
+                      }
+                    },
                     itemBuilder: (context) => [
                       const PopupMenuItem(
                         value: DealStage.potential,
@@ -76,6 +84,17 @@ class DealCard extends StatelessWidget {
                       const PopupMenuItem(
                         value: DealStage.lost,
                         child: Text('Perdido', style: TextStyle(fontSize: 12)),
+                      ),
+                      const PopupMenuDivider(),
+                      const PopupMenuItem(
+                        value: 'delete',
+                        child: Row(
+                          children: [
+                            Icon(Icons.delete, size: 16, color: Colors.redAccent),
+                            SizedBox(width: 8),
+                            Text('Excluir Oportunidade', style: TextStyle(fontSize: 12, color: Colors.redAccent, fontWeight: FontWeight.bold)),
+                          ],
+                        ),
                       ),
                     ],
                   ),

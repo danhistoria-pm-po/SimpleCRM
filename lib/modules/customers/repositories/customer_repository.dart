@@ -9,7 +9,7 @@ class CustomerRepository {
   Future<List<Customer>> getCustomers() async {
     try {
       final response = await _supabase.from('customers').select();
-      
+
       return (response as List).map((data) {
         return Customer(
           id: data['id'] ?? '',
@@ -24,8 +24,9 @@ class CustomerRepository {
         );
       }).toList();
     } catch (e) {
-      print('Erro ao carregar clientes do Supabase: $e');
-      return [];
+      // CORRIGIDO: Em vez de esconder o erro e retornar uma lista vazia,
+      // nós avisamos o Controller para que ele possa mostrar na tela.
+      rethrow; 
     }
   }
 
@@ -38,19 +39,22 @@ class CustomerRepository {
         'email': customer.email,
         'address': customer.address,
         'notes': customer.notes,
+        // O user_id é preenchido automaticamente pelo Supabase (default auth.uid())
       });
     } catch (e) {
-      print('Erro ao salvar cliente no Supabase: $e');
       rethrow;
     }
   }
 
-  // Deletar um cliente na tabela 'customers'
+  // Deletar um cliente e as deals associadas para manter a consistência com o Pipeline
   Future<void> deleteCustomer(String id) async {
     try {
+      // 1. Remove primeiro as oportunidades (deals) associadas a este cliente no funil de vendas
+      await _supabase.from('deals').delete().eq('customer_id', id);
+
+      // 2. Remove o cliente da tabela 'customers'
       await _supabase.from('customers').delete().eq('id', id);
     } catch (e) {
-      print('Erro ao deletar cliente no Supabase: $e');
       rethrow;
     }
   }

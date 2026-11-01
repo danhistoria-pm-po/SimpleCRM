@@ -7,7 +7,10 @@ class CustomerController extends ChangeNotifier {
   // Padrão Singleton: Garante uma única instância partilhada em todo o app
   static final CustomerController _instance = CustomerController._internal();
   factory CustomerController() => _instance;
-  CustomerController._internal();
+  
+  CustomerController._internal() {
+    loadCustomers(); // Carrega automaticamente os clientes do Supabase assim que o controller inicializa
+  }
 
   final CustomerRepository _repository = CustomerRepository();
 
@@ -17,6 +20,12 @@ class CustomerController extends ChangeNotifier {
   bool _isLoading = false;
   bool get isLoading => _isLoading;
 
+  // Limpa a memória do app ao fazer logout
+  void reset() {
+    _customers = [];
+    notifyListeners();
+  }
+
   // Carrega os clientes do Supabase
   Future<void> loadCustomers() async {
     _isLoading = true;
@@ -25,7 +34,8 @@ class CustomerController extends ChangeNotifier {
     try {
       _customers = await _repository.getCustomers();
     } catch (e) {
-      print('Erro no controller ao carregar clientes: $e');
+      debugPrint('Erro no controller ao carregar clientes: $e');
+      rethrow; // Repassa o erro para a tela avisar o usuário
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -58,7 +68,8 @@ class CustomerController extends ChangeNotifier {
       await _repository.addCustomer(newCustomer);
       await loadCustomers(); // Atualiza a lista unificada direto da base de dados
     } catch (e) {
-      print('Erro ao adicionar cliente: $e');
+      debugPrint('Erro ao adicionar cliente: $e');
+      rethrow; // Repassa o erro para a tela avisar o usuário
     }
   }
 
@@ -69,7 +80,8 @@ class CustomerController extends ChangeNotifier {
       _customers.removeWhere((customer) => customer.id == id);
       notifyListeners();
     } catch (e) {
-      print('Erro ao remover cliente: $e');
+      debugPrint('Erro ao remover cliente: $e');
+      rethrow; // Repassa o erro para a tela avisar o usuário
     }
   }
 }
