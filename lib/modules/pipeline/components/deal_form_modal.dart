@@ -80,7 +80,7 @@ class _DealFormModalState extends State<DealFormModal> {
                     }
 
                     return DropdownButtonFormField<dynamic>(
-                      value: _selectedCustomer,
+                      initialValue: _selectedCustomer,
                       decoration: const InputDecoration(labelText: 'Selecione o Cliente'),
                       items: customers.map((customer) {
                         return DropdownMenuItem<dynamic>(
@@ -100,13 +100,13 @@ class _DealFormModalState extends State<DealFormModal> {
                 const SizedBox(height: 12),
                 TextFormField(
                   controller: _valueController,
-                  decoration: InputDecoration(labelText: 'Valor (R\$)'),
+                  decoration: const InputDecoration(labelText: 'Valor (R\$)'),
                   keyboardType: TextInputType.number,
                   validator: (value) => value == null || double.tryParse(value) == null ? 'Informe um valor válido' : null,
                 ),
                 const SizedBox(height: 12),
                 DropdownButtonFormField<DealStage>(
-                  value: _selectedStage,
+                  initialValue: _selectedStage,
                   decoration: const InputDecoration(labelText: 'Etapa Inicial'),
                   items: DealStage.values.map((stage) {
                     return DropdownMenuItem(

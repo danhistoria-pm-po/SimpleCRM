@@ -2,6 +2,9 @@
 import 'package:flutter/material.dart';
 import 'modules/pipeline/presentation/pipeline_page.dart';
 import 'modules/customers/presentation/customer_list_page.dart';
+import 'modules/billing/presentation/billing_page.dart';
+import 'modules/cash_flow/presentation/cash_flow_page.dart';
+import 'features/follow_up/views/follow_up_view.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -13,14 +16,13 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   int _currentIndex = 0;
 
-  // Lista de páginas correspondentes às abas inferiores
-  final List<Widget> _pages = [
-    const PipelinePage(),
-    const CustomerListPage(),
-    // Placeholders temporários para as abas que ainda serão construídas
-    const Scaffold(body: Center(child: Text('Gestão de Faturamento & Notas Fiscais'))),
-    const Scaffold(body: Center(child: Text('Fluxo de Caixa Simples'))),
-    const Scaffold(body: Center(child: Text('Pós-Venda & Follow-up'))),
+  // Lista de páginas correspondentes às abas inferiores (Sprints 1 a 7 integradas)
+  final List<Widget> _pages = const [
+    PipelinePage(),
+    CustomerListPage(),
+    BillingPage(),
+    CashFlowPage(),
+    FollowUpView(),
   ];
 
   @override
