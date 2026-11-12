@@ -30,6 +30,31 @@ class _FollowUpViewState extends State<FollowUpView> {
     super.dispose();
   }
 
+  Future<bool> _confirmDeleteFollowUp(String title) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Confirmar Exclusão'),
+        content: Text('Deseja realmente excluir o follow-up "$title"?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('Cancelar'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.redAccent,
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: const Text('Excluir'),
+          ),
+        ],
+      ),
+    );
+    return confirmed ?? false;
+  }
+
   String _resolveCustomerName(String customerId) {
     for (final c in _customerController.customers) {
       if (c.id == customerId) {
@@ -146,6 +171,8 @@ class _FollowUpViewState extends State<FollowUpView> {
                             ),
                             tooltip: 'Excluir Follow-up',
                             onPressed: () async {
+                              final confirmed = await _confirmDeleteFollowUp(item.title);
+                              if (!confirmed || !mounted) return;
                               await _controller.deleteFollowUp(item.id);
                             },
                           ),

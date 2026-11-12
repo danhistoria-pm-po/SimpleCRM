@@ -46,15 +46,27 @@ class CustomerRepository {
     }
   }
 
-  // Deletar um cliente e as deals associadas para manter a consistência com o Pipeline
+  // Deletar um cliente de forma atômica via RPC delete_customer_safe
+  // Bloqueia se houver faturas (invoices) ou follow-ups vinculados; caso contrário, remove deals e o cliente.
   Future<void> deleteCustomer(String id) async {
     try {
-      // 1. Remove primeiro as oportunidades (deals) associadas a este cliente no funil de vendas
-      await _supabase.from('deals').delete().eq('customer_id', id);
-
-      // 2. Remove o cliente da tabela 'customers'
-      await _supabase.from('customers').delete().eq('id', id);
+      await _supabase.rpc(
+        'delete_customer_safe',
+        params: {'p_customer_id': id},
+      );
+    } on PostgrestException catch (e) {
+      if (e.message.contains('CLIENTE_COM_VINCULOS') || e.code == '23503') {
+        throw Exception(
+          'Este cliente possui faturas ou follow-ups. Exclua-os antes de remover o cliente.',
+        );
+      }
+      rethrow;
     } catch (e) {
+      if (e.toString().contains('CLIENTE_COM_VINCULOS')) {
+        throw Exception(
+          'Este cliente possui faturas ou follow-ups. Exclua-os antes de remover o cliente.',
+        );
+      }
       rethrow;
     }
   }

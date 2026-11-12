@@ -31,6 +31,31 @@ class _BillingPageState extends State<BillingPage> {
     super.dispose();
   }
 
+  Future<bool> _confirmDeleteInvoice(String customerName) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Confirmar Exclusão'),
+        content: Text('Deseja realmente excluir a fatura de "$customerName"?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('Cancelar'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.redAccent,
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: const Text('Excluir'),
+          ),
+        ],
+      ),
+    );
+    return confirmed ?? false;
+  }
+
   Customer _resolveCustomer(InvoiceEntity invoice) {
     for (final c in _customerController.customers) {
       if (c.id == invoice.customerId || c.name == invoice.customerName) {
@@ -266,6 +291,10 @@ class _BillingPageState extends State<BillingPage> {
                             tooltip: 'Opções da Fatura',
                             onSelected: (value) async {
                               if (value == 'delete') {
+                                final confirmed = await _confirmDeleteInvoice(
+                                  invoice.customerName,
+                                );
+                                if (!confirmed || !mounted) return;
                                 await _controller.deleteInvoice(invoice.id);
                               } else if (value == 'paid') {
                                 await _controller.updateInvoiceStatus(

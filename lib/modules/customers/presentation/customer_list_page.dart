@@ -25,6 +25,33 @@ class _CustomerListPageState extends State<CustomerListPage> {
 
   // ⚠️ O método dispose() foi REMOVIDO daqui para não destruir o Singleton.
 
+  Future<bool> _confirmDeleteCustomer(String customerName) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Confirmar Exclusão'),
+        content: Text(
+          'Deseja realmente excluir o cliente "$customerName"? As oportunidades (deals) deste cliente no funil também serão removidas.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('Cancelar'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.redAccent,
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: const Text('Excluir'),
+          ),
+        ],
+      ),
+    );
+    return confirmed ?? false;
+  }
+
   void _showAddCustomerDialog() {
     showDialog(
       context: context,
@@ -118,14 +145,15 @@ class _CustomerListPageState extends State<CustomerListPage> {
                   trailing: IconButton(
                     icon: const Icon(Icons.delete, color: Colors.redAccent),
                     onPressed: () async {
-                      // Adicionando tratamento de erro também no delete
+                      final confirmed = await _confirmDeleteCustomer(customer.name);
+                      if (!confirmed || !context.mounted) return;
                       try {
                         await _controller.removeCustomer(customer.id);
                       } catch (e) {
                         if (!context.mounted) return;
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
-                            content: Text('Erro ao excluir: ${e.toString().replaceAll("Exception: ", "")}'),
+                            content: Text(e.toString().replaceAll('Exception: ', '')),
                             backgroundColor: Colors.red,
                           ),
                         );

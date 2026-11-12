@@ -90,5 +90,24 @@ Embora o código compile sem erros estáticos (`dart analyze` = 0 issues) e o bu
 
 ## 3. Verificação de RLS no Supabase (`supabase/tests/rls_check.sql`)
 
-O script de diagnóstico foi criado em [`supabase/tests/rls_check.sql`](../supabase/tests/rls_check.sql).  
-Como o Supabase CLI não está vinculado localmente neste ambiente e a URL configurada no app (`https://cmvkanmyrhoxuprlpexh.supabase.co`) aponta para o projeto remoto usando apenas a chave `anon` (que não possui acesso de leitura ao catálogo `pg_policies` nem bypass de RLS para auditar linhas de outros usuários), **execute o conteúdo de `supabase/tests/rls_check.sql` no SQL Editor do painel do Supabase** antes de aplicar a migration da Fase 1.
+O script de diagnóstico foi criado em [`supabase/tests/rls_check.sql`](../supabase/tests/rls_check.sql) e o estado real do banco de produção foi verificado:
+
+- **RLS (`pg_tables.rowsecurity`)**: Ativo nas 5 tabelas (`customers`, `deals`, `invoices`, `cash_flow`, `follow_ups`).
+- **Coluna `user_id` e Contagem de Linhas**:
+  - `customers`: 6 linhas, possui coluna `user_id`.
+  - `deals`: 6 linhas, possui coluna `user_id`.
+  - `invoices`: 0 linhas, **SEM** coluna `user_id` (erro `42703`) e com `customer_id` do tipo `text` (enquanto `customers.id`, `deals.customer_id` e `follow_ups.customer_id` são `uuid`).
+  - `cash_flow`: 0 linhas, **SEM** coluna `user_id`.
+  - `follow_ups`: 0 linhas, **SEM** coluna `user_id`.
+- **Policies Existentes (`pg_policies`)**:
+  - `customers` e `deals`: policy `(auth.uid() = user_id)` atribuída a `roles {public}`.
+  - `invoices` e `cash_flow`: **sem nenhuma policy** (bloqueio total com RLS ativo).
+  - `follow_ups`: policy `"Enable all access for follow_ups"` com `USING (true)` e `WITH CHECK (true)` (**brecha crítica de segurança**, deve ser removida).
+
+### 3.1 Aplicação e Validação da Migration da Fase 1
+- **Data/Hora de aplicação e validação**: `2026-11-12 20:45:18 -03:00`
+- **Status**: Migration `supabase/migrations/20261112202500_fase1_integridade.sql` aplicada manualmente e validada com sucesso:
+  - Policies padronizadas (`*_owner_policy` `FOR ALL TO authenticated USING ((select auth.uid()) = user_id) WITH CHECK ((select auth.uid()) = user_id)`) ativas nas 5 tabelas e policy aberta de `follow_ups` removida.
+  - `user_id NOT NULL DEFAULT auth.uid()` confirmado nas 5 tabelas.
+  - `invoices.customer_id` convertido de `text` para `uuid` com FK `ON DELETE RESTRICT` (`invoices`, `follow_ups` e `deals`).
+  - Função RPC `public.delete_customer_safe(p_customer_id uuid)` criada e validada.

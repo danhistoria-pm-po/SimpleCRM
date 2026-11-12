@@ -83,7 +83,34 @@ class _PipelinePageState extends State<PipelinePage> {
     }
   }
 
+  Future<bool> _confirmDeleteDeal() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Confirmar Exclusão'),
+        content: const Text('Deseja realmente excluir esta oportunidade do funil de vendas?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('Cancelar'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.redAccent,
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: const Text('Excluir'),
+          ),
+        ],
+      ),
+    );
+    return confirmed ?? false;
+  }
+
   Future<void> _handleDeleteDeal(String id) async {
+    final confirmed = await _confirmDeleteDeal();
+    if (!confirmed || !mounted) return;
     try {
       await _controller.deleteDeal(id);
     } catch (e) {

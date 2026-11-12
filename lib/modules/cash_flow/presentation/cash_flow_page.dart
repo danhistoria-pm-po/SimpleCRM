@@ -27,6 +27,31 @@ class _CashFlowPageState extends State<CashFlowPage> {
     super.dispose();
   }
 
+  Future<bool> _confirmDeleteEntry(String description) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Confirmar Exclusão'),
+        content: Text('Deseja realmente excluir o lançamento "$description"?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('Cancelar'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.redAccent,
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: const Text('Excluir'),
+          ),
+        ],
+      ),
+    );
+    return confirmed ?? false;
+  }
+
   void _showAddEntryModal() {
     final descriptionController = TextEditingController();
     final amountController = TextEditingController();
@@ -239,6 +264,10 @@ class _CashFlowPageState extends State<CashFlowPage> {
                                       size: 20,
                                     ),
                                     onPressed: () async {
+                                      final confirmed = await _confirmDeleteEntry(
+                                        entry.description,
+                                      );
+                                      if (!confirmed || !mounted) return;
                                       await _controller.deleteEntry(entry.id);
                                     },
                                   ),
