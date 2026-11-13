@@ -3,7 +3,11 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/follow_up_model.dart';
 
 class FollowUpRepository {
-  final SupabaseClient _supabase = Supabase.instance.client;
+  final SupabaseClient? client;
+
+  FollowUpRepository({this.client});
+
+  SupabaseClient get _supabase => client ?? Supabase.instance.client;
 
   Future<List<FollowUpModel>> getFollowUps() async {
     try {

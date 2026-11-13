@@ -1,8 +1,7 @@
 // lib/modules/customers/presentation/customer_list_page.dart
-
 import 'package:flutter/material.dart';
 import 'customer_controller.dart';
-import 'customer_form_modal.dart'; 
+import 'customer_form_modal.dart';
 import '../../auth/controllers/auth_controller.dart';
 
 class CustomerListPage extends StatefulWidget {
@@ -19,11 +18,14 @@ class _CustomerListPageState extends State<CustomerListPage> {
   @override
   void initState() {
     super.initState();
-    // CORREÇÃO: Força a busca de dados toda vez que a aba é montada
-    _controller.loadCustomers();
+    _controller.ensureLoaded();
   }
 
-  // ⚠️ O método dispose() foi REMOVIDO daqui para não destruir o Singleton.
+  @override
+  void dispose() {
+    _authController.dispose();
+    super.dispose();
+  }
 
   Future<bool> _confirmDeleteCustomer(String customerName) async {
     final confirmed = await showDialog<bool>(
@@ -58,19 +60,19 @@ class _CustomerListPageState extends State<CustomerListPage> {
       builder: (dialogContext) {
         return CustomerFormModal(
           onSave: ({required name, phone, email, address, notes}) async {
-            try {
-              await _controller.addCustomer(
-                name: name,
-                phone: phone,
-                email: email,
-                address: address,
-                notes: notes,
-              );
-            } catch (e) {
-              if (!mounted) return;
+            final ok = await _controller.addCustomer(
+              name: name,
+              phone: phone,
+              email: email,
+              address: address,
+              notes: notes,
+            );
+            if (!ok && mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                  content: Text('Erro ao salvar cliente: ${e.toString().replaceAll("Exception: ", "")}'),
+                  content: Text(
+                    'Erro ao salvar cliente: ${_controller.errorMessage ?? "Erro desconhecido"}',
+                  ),
                   backgroundColor: Colors.red,
                   duration: const Duration(seconds: 5),
                 ),
@@ -91,10 +93,25 @@ class _CustomerListPageState extends State<CustomerListPage> {
         foregroundColor: Colors.white,
         actions: [
           IconButton(
+            icon: const Icon(Icons.refresh),
+            tooltip: 'Atualizar Clientes',
+            onPressed: () async {
+              final ok = await _controller.loadCustomers(silent: true);
+              if (!ok && context.mounted && _controller.errorMessage != null) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(_controller.errorMessage!),
+                    backgroundColor: Colors.red,
+                  ),
+                );
+              }
+            },
+          ),
+          IconButton(
             icon: const Icon(Icons.logout),
             tooltip: 'Sair',
             onPressed: () async {
-              await _authController.logout(); 
+              await _authController.logout();
             },
           ),
         ],
@@ -102,12 +119,35 @@ class _CustomerListPageState extends State<CustomerListPage> {
       body: AnimatedBuilder(
         animation: _controller,
         builder: (context, _) {
-          // CORREÇÃO: Mostra o loading enquanto o banco responde
           if (_controller.isLoading) {
             return const Center(child: CircularProgressIndicator());
           }
 
           final customers = _controller.customers;
+
+          if (_controller.errorMessage != null && customers.isEmpty) {
+            return Center(
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      _controller.errorMessage!,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(color: Colors.red, fontSize: 16),
+                    ),
+                    const SizedBox(height: 12),
+                    ElevatedButton.icon(
+                      onPressed: () => _controller.loadCustomers(),
+                      icon: const Icon(Icons.refresh),
+                      label: const Text('Tentar novamente'),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }
 
           if (customers.isEmpty) {
             return const Center(
@@ -131,10 +171,16 @@ class _CustomerListPageState extends State<CustomerListPage> {
                     backgroundColor: Colors.indigo.shade100,
                     child: Text(
                       customer.name.isNotEmpty ? customer.name[0].toUpperCase() : 'C',
-                      style: const TextStyle(color: Colors.indigo, fontWeight: FontWeight.bold),
+                      style: const TextStyle(
+                        color: Colors.indigo,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
-                  title: Text(customer.name, style: const TextStyle(fontWeight: FontWeight.bold)),
+                  title: Text(
+                    customer.name,
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
                   subtitle: Text(
                     [
                       customer.phone,
@@ -147,13 +193,13 @@ class _CustomerListPageState extends State<CustomerListPage> {
                     onPressed: () async {
                       final confirmed = await _confirmDeleteCustomer(customer.name);
                       if (!confirmed || !context.mounted) return;
-                      try {
-                        await _controller.removeCustomer(customer.id);
-                      } catch (e) {
-                        if (!context.mounted) return;
+                      final ok = await _controller.removeCustomer(customer.id);
+                      if (!ok && context.mounted) {
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
-                            content: Text(e.toString().replaceAll('Exception: ', '')),
+                            content: Text(
+                              _controller.errorMessage ?? 'Erro ao excluir cliente.',
+                            ),
                             backgroundColor: Colors.red,
                           ),
                         );

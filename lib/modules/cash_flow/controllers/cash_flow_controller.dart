@@ -4,14 +4,19 @@ import '../models/cash_flow_entry_entity.dart';
 import '../repositories/cash_flow_repository.dart';
 
 class CashFlowController extends ChangeNotifier {
-  final CashFlowRepository _repository = CashFlowRepository();
+  final CashFlowRepository _repository;
+
+  CashFlowController({CashFlowRepository? repository})
+      : _repository = repository ?? CashFlowRepository();
 
   List<CashFlowEntryEntity> _entries = [];
   bool _isLoading = false;
+  bool _isRefreshing = false;
   String? _errorMessage;
 
   List<CashFlowEntryEntity> get entries => List.unmodifiable(_entries);
   bool get isLoading => _isLoading;
+  bool get isRefreshing => _isRefreshing;
   String? get errorMessage => _errorMessage;
 
   double get totalIncome {
@@ -28,29 +33,38 @@ class CashFlowController extends ChangeNotifier {
 
   double get netBalance => totalIncome - totalExpense;
 
-  Future<void> loadEntries() async {
-    _isLoading = true;
+  Future<bool> loadEntries({bool silent = false}) async {
+    if (!silent && _entries.isEmpty) {
+      _isLoading = true;
+    } else {
+      _isRefreshing = true;
+    }
     _errorMessage = null;
     notifyListeners();
 
     try {
       _entries = await _repository.fetchEntries();
+      return true;
     } catch (e) {
-      _errorMessage = 'Erro ao carregar fluxo de caixa: ${e.toString().replaceAll("Exception: ", "")}';
+      _errorMessage =
+          'Erro ao carregar fluxo de caixa: ${e.toString().replaceAll("Exception: ", "")}';
       debugPrint(_errorMessage);
+      return false;
     } finally {
       _isLoading = false;
+      _isRefreshing = false;
       notifyListeners();
     }
   }
 
   Future<bool> createEntry(CashFlowEntryEntity entry) async {
     try {
+      _errorMessage = null;
       await _repository.createEntry(entry);
-      await loadEntries();
-      return true;
+      return await loadEntries(silent: true);
     } catch (e) {
-      _errorMessage = 'Erro ao criar lançamento: ${e.toString().replaceAll("Exception: ", "")}';
+      _errorMessage =
+          'Erro ao criar lançamento: ${e.toString().replaceAll("Exception: ", "")}';
       debugPrint(_errorMessage);
       notifyListeners();
       return false;
@@ -58,13 +72,18 @@ class CashFlowController extends ChangeNotifier {
   }
 
   Future<bool> deleteEntry(String id) async {
+    final previousEntries = List<CashFlowEntryEntity>.from(_entries);
+    _entries.removeWhere((e) => e.id == id);
+    _errorMessage = null;
+    notifyListeners();
+
     try {
       await _repository.deleteEntry(id);
-      _entries.removeWhere((e) => e.id == id);
-      notifyListeners();
       return true;
     } catch (e) {
-      _errorMessage = 'Erro ao excluir lançamento: ${e.toString().replaceAll("Exception: ", "")}';
+      _entries = previousEntries;
+      _errorMessage =
+          'Erro ao excluir lançamento: ${e.toString().replaceAll("Exception: ", "")}';
       debugPrint(_errorMessage);
       notifyListeners();
       return false;

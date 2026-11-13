@@ -1,62 +1,155 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:simple_crm/modules/customers/domain/entities/customer_entity.dart';
+import 'package:simple_crm/modules/customers/presentation/customer_controller.dart';
+import 'package:simple_crm/modules/customers/presentation/customer_form_modal.dart';
+import 'package:simple_crm/modules/customers/repositories/customer_repository.dart';
+import 'package:simple_crm/modules/pipeline/components/deal_card.dart';
+import 'package:simple_crm/modules/pipeline/components/deal_form_modal.dart';
 import 'package:simple_crm/modules/pipeline/models/deal_entity.dart';
-import 'package:simple_crm/modules/billing/models/invoice_entity.dart';
-import 'package:simple_crm/modules/cash_flow/models/cash_flow_entry_entity.dart';
-import 'package:simple_crm/features/follow_up/models/follow_up_model.dart';
+
+class _InMemoryCustomerRepository extends CustomerRepository {
+  final List<Customer> initial;
+  _InMemoryCustomerRepository(this.initial);
+
+  @override
+  Future<List<Customer>> getCustomers() async => initial;
+}
 
 void main() {
-  test('SimpleCRM domain entities instantiate and copyWith properly', () {
-    final now = DateTime.now();
-
-    final customer = Customer(
-      id: 'c1',
-      name: 'Empresa Alpha',
-      email: 'contato@alpha.com',
-      createdAt: now,
-      updatedAt: now,
-    );
-    expect(customer.name, 'Empresa Alpha');
+  testWidgets('DealCard exibe dados da oportunidade e aciona callbacks de etapa e exclusao', (
+    WidgetTester tester,
+  ) async {
+    DealStage? changedStage;
+    String? deletedDealId;
 
     final deal = DealEntity(
-      id: 'd1',
-      customerId: customer.id,
-      customerName: customer.name,
-      title: 'Contrato Anual',
-      value: 5000.0,
+      id: 'deal-1',
+      customerId: 'cust-1',
+      customerName: 'Padaria Central',
+      title: 'Implantação ERP',
+      value: 2500.0,
       stage: DealStage.potential,
-      createdAt: now,
+      createdAt: DateTime(2026, 11, 12),
     );
-    expect(deal.copyWith(stage: DealStage.activeClient).stage, DealStage.activeClient);
 
-    final invoice = InvoiceEntity(
-      id: 'i1',
-      customerId: customer.id,
-      customerName: customer.name,
-      amount: 5000.0,
-      dueDate: now,
-      createdAt: now,
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: DealCard(
+            deal: deal,
+            onStageChanged: (stage) => changedStage = stage,
+            onDelete: (id) => deletedDealId = id,
+          ),
+        ),
+      ),
     );
-    expect(invoice.status, InvoiceStatus.pending);
 
-    final entry = CashFlowEntryEntity(
-      id: 'cf1',
-      description: 'Recebimento Contrato Anual',
-      amount: 5000.0,
-      type: CashFlowType.income,
-      date: now,
-    );
-    expect(entry.type, CashFlowType.income);
+    expect(find.text('Implantação ERP'), findsOneWidget);
+    expect(find.text('Padaria Central'), findsOneWidget);
+    expect(find.text('R\$ 2500.00'), findsOneWidget);
 
-    final followUp = FollowUpModel(
-      id: 'f1',
-      customerId: customer.id,
-      title: 'Validar satisfação 7 dias',
-      scheduledDate: now,
-      status: 'pendente',
-      isReceived: false,
-      createdAt: now,
+    // Abrir menu popup e mudar para Cliente Ativo
+    await tester.tap(find.byIcon(Icons.swap_horiz));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Cliente Ativo'));
+    await tester.pumpAndSettle();
+
+    expect(changedStage, DealStage.activeClient);
+
+    // Abrir menu popup e clicar em Excluir Oportunidade
+    await tester.tap(find.byIcon(Icons.swap_horiz));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Excluir Oportunidade'));
+    await tester.pumpAndSettle();
+
+    expect(deletedDealId, 'deal-1');
+  });
+
+  testWidgets('DealFormModal usa ID (String) no dropdown e nao quebra ao recarregar clientes', (
+    WidgetTester tester,
+  ) async {
+    final now = DateTime(2026, 11, 12);
+    final repo = _InMemoryCustomerRepository([
+      Customer(id: 'c1', name: 'Cliente Um', createdAt: now, updatedAt: now),
+      Customer(id: 'c2', name: 'Cliente Dois', createdAt: now, updatedAt: now),
+    ]);
+    final customerController = CustomerController(repository: repo);
+    await customerController.loadCustomers();
+
+    DealEntity? savedDeal;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: DealFormModal(
+            customerController: customerController,
+            onSave: (deal) => savedDeal = deal,
+          ),
+        ),
+      ),
     );
-    expect(followUp.copyWith(isReceived: true).isReceived, isTrue);
+
+    // Selecionar 'Cliente Um' no dropdown
+    await tester.tap(find.byType(DropdownButtonFormField<String>));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Cliente Um').last);
+    await tester.pumpAndSettle();
+
+    // Recarregar clientes enquanto o modal está aberto (novas instâncias de Customer com mesmo id)
+    await customerController.loadCustomers(silent: true);
+    await tester.pumpAndSettle();
+
+    await tester.enterText(
+      find.widgetWithText(TextFormField, 'Título da Oportunidade'),
+      'Consultoria Mensal',
+    );
+    await tester.enterText(
+      find.widgetWithText(TextFormField, 'Valor (R\$)'),
+      '1800',
+    );
+
+    await tester.tap(find.text('Salvar'));
+    await tester.pumpAndSettle();
+
+    expect(savedDeal, isNotNull);
+    expect(savedDeal!.customerId, 'c1');
+    expect(savedDeal!.customerName, 'Cliente Um');
+    expect(savedDeal!.title, 'Consultoria Mensal');
+    expect(savedDeal!.value, 1800.0);
+  });
+
+  testWidgets('CustomerFormModal preenche, salva e descarta controllers sem erros', (
+    WidgetTester tester,
+  ) async {
+    String? savedName;
+    String? savedEmail;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: CustomerFormModal(
+            onSave: ({
+              required name,
+              phone,
+              email,
+              address,
+              notes,
+            }) {
+              savedName = name;
+              savedEmail = email;
+            },
+          ),
+        ),
+      ),
+    );
+
+    await tester.enterText(find.widgetWithText(TextField, 'Nome *'), 'Maria Silva');
+    await tester.enterText(find.widgetWithText(TextField, 'E-mail'), 'maria@silva.com');
+    await tester.tap(find.text('Salvar'));
+    await tester.pumpAndSettle();
+
+    expect(savedName, 'Maria Silva');
+    expect(savedEmail, 'maria@silva.com');
   });
 }

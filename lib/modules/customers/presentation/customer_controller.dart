@@ -4,15 +4,19 @@ import '../domain/entities/customer_entity.dart';
 import '../repositories/customer_repository.dart';
 
 class CustomerController extends ChangeNotifier {
-  // Padrão Singleton: Garante uma única instância partilhada em todo o app
   static final CustomerController _instance = CustomerController._internal();
-  factory CustomerController() => _instance;
-  
-  CustomerController._internal() {
-    loadCustomers(); // Carrega automaticamente os clientes do Supabase assim que o controller inicializa
+
+  factory CustomerController({CustomerRepository? repository}) {
+    if (repository != null) {
+      return CustomerController._internal(repository: repository);
+    }
+    return _instance;
   }
 
-  final CustomerRepository _repository = CustomerRepository();
+  CustomerController._internal({CustomerRepository? repository})
+      : _repository = repository ?? CustomerRepository();
+
+  final CustomerRepository _repository;
 
   List<Customer> _customers = [];
   List<Customer> get customers => List.unmodifiable(_customers);
@@ -20,30 +24,72 @@ class CustomerController extends ChangeNotifier {
   bool _isLoading = false;
   bool get isLoading => _isLoading;
 
-  // Limpa a memória do app ao fazer logout
+  bool _isRefreshing = false;
+  bool get isRefreshing => _isRefreshing;
+
+  String? _errorMessage;
+  String? get errorMessage => _errorMessage;
+
+  bool _hasLoadedOnce = false;
+  int _generation = 0;
+
+  // Limpa a memória do app ao fazer logout e invalida requisições em andamento da sessão anterior
   void reset() {
+    _generation++;
     _customers = [];
+    _isLoading = false;
+    _isRefreshing = false;
+    _errorMessage = null;
+    _hasLoadedOnce = false;
     notifyListeners();
   }
 
-  // Carrega os clientes do Supabase
-  Future<void> loadCustomers() async {
-    _isLoading = true;
+  // Evita carga duplicada na montagem inicial das abas
+  Future<bool> ensureLoaded() async {
+    if (_hasLoadedOnce || _isLoading || _isRefreshing) {
+      return _errorMessage == null;
+    }
+    return loadCustomers();
+  }
+
+  // Carrega os clientes do Supabase sem lançar exceção não capturada
+  Future<bool> loadCustomers({bool silent = false}) async {
+    final int requestGen = _generation;
+
+    if (!silent && _customers.isEmpty) {
+      _isLoading = true;
+    } else {
+      _isRefreshing = true;
+    }
+    _errorMessage = null;
     notifyListeners();
 
     try {
-      _customers = await _repository.getCustomers();
+      final result = await _repository.getCustomers();
+      if (requestGen != _generation) {
+        return false; // Sessão foi resetada durante o await; descarta resultado antigo
+      }
+      _customers = result;
+      _hasLoadedOnce = true;
+      return true;
     } catch (e) {
-      debugPrint('Erro no controller ao carregar clientes: $e');
-      rethrow; // Repassa o erro para a tela avisar o usuário
+      if (requestGen != _generation) {
+        return false;
+      }
+      _errorMessage = e.toString().replaceAll('Exception: ', '');
+      debugPrint('Erro no controller ao carregar clientes: $_errorMessage');
+      return false;
     } finally {
-      _isLoading = false;
-      notifyListeners();
+      if (requestGen == _generation) {
+        _isLoading = false;
+        _isRefreshing = false;
+        notifyListeners();
+      }
     }
   }
 
   // Adiciona um cliente e persiste no Supabase
-  Future<void> addCustomer({
+  Future<bool> addCustomer({
     required String name,
     String? phone,
     String? email,
@@ -53,7 +99,7 @@ class CustomerController extends ChangeNotifier {
   }) async {
     final now = DateTime.now();
     final newCustomer = Customer(
-      id: '', // Gerado pelo Supabase
+      id: '',
       name: name,
       phone: phone,
       email: email,
@@ -65,23 +111,31 @@ class CustomerController extends ChangeNotifier {
     );
 
     try {
+      _errorMessage = null;
       await _repository.addCustomer(newCustomer);
-      await loadCustomers(); // Atualiza a lista unificada direto da base de dados
+      await loadCustomers(silent: true);
+      return true;
     } catch (e) {
-      debugPrint('Erro ao adicionar cliente: $e');
-      rethrow; // Repassa o erro para a tela avisar o usuário
+      _errorMessage = e.toString().replaceAll('Exception: ', '');
+      debugPrint('Erro ao adicionar cliente: $_errorMessage');
+      notifyListeners();
+      return false;
     }
   }
 
-  // Remove o cliente do Supabase
-  Future<void> removeCustomer(String id) async {
+  // Remove o cliente do Supabase via RPC delete_customer_safe
+  Future<bool> removeCustomer(String id) async {
     try {
+      _errorMessage = null;
       await _repository.deleteCustomer(id);
       _customers.removeWhere((customer) => customer.id == id);
       notifyListeners();
+      return true;
     } catch (e) {
-      debugPrint('Erro ao remover cliente: $e');
-      rethrow; // Repassa o erro para a tela avisar o usuário
+      _errorMessage = e.toString().replaceAll('Exception: ', '');
+      debugPrint('Erro ao remover cliente: $_errorMessage');
+      notifyListeners();
+      return false;
     }
   }
 }

@@ -3,30 +3,39 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../domain/entities/customer_entity.dart';
 
 class CustomerRepository {
-  final SupabaseClient _supabase = Supabase.instance.client;
+  final SupabaseClient? client;
 
-  // Buscar todos os clientes da tabela correta 'customers'
+  CustomerRepository({this.client});
+
+  SupabaseClient get _supabase => client ?? Supabase.instance.client;
+
+  // Buscar todos os clientes ordenados deterministicamente por nome
   Future<List<Customer>> getCustomers() async {
     try {
-      final response = await _supabase.from('customers').select();
+      final response = await _supabase
+          .from('customers')
+          .select()
+          .order('name', ascending: true);
 
       return (response as List).map((data) {
         return Customer(
-          id: data['id'] ?? '',
+          id: data['id']?.toString() ?? '',
           name: data['name'] ?? '',
           phone: data['phone'],
           email: data['email'],
           address: data['address'],
           status: CustomerStatus.potential,
           notes: data['notes'],
-          createdAt: data['created_at'] != null ? DateTime.parse(data['created_at']) : DateTime.now(),
-          updatedAt: data['updated_at'] != null ? DateTime.parse(data['updated_at']) : DateTime.now(),
+          createdAt: data['created_at'] != null
+              ? DateTime.parse(data['created_at']).toLocal()
+              : DateTime.now(),
+          updatedAt: data['updated_at'] != null
+              ? DateTime.parse(data['updated_at']).toLocal()
+              : DateTime.now(),
         );
       }).toList();
     } catch (e) {
-      // CORRIGIDO: Em vez de esconder o erro e retornar uma lista vazia,
-      // nós avisamos o Controller para que ele possa mostrar na tela.
-      rethrow; 
+      rethrow;
     }
   }
 
@@ -39,7 +48,6 @@ class CustomerRepository {
         'email': customer.email,
         'address': customer.address,
         'notes': customer.notes,
-        // O user_id é preenchido automaticamente pelo Supabase (default auth.uid())
       });
     } catch (e) {
       rethrow;

@@ -3,12 +3,19 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/invoice_entity.dart';
 
 class BillingRepository {
-  final SupabaseClient _supabase = Supabase.instance.client;
+  final SupabaseClient? client;
 
-  // Buscar todas as faturas do Supabase
+  BillingRepository({this.client});
+
+  SupabaseClient get _supabase => client ?? Supabase.instance.client;
+
+  // Buscar todas as faturas do Supabase ordenadas por vencimento (due_date)
   Future<List<InvoiceEntity>> fetchInvoices() async {
     try {
-      final response = await _supabase.from('invoices').select();
+      final response = await _supabase
+          .from('invoices')
+          .select()
+          .order('due_date', ascending: true);
 
       return (response as List).map((json) {
         return InvoiceEntity(
@@ -17,11 +24,11 @@ class BillingRepository {
           customerName: json['customer_name'] ?? '',
           amount: (json['value'] != null) ? (json['value'] as num).toDouble() : 0.0,
           dueDate: json['due_date'] != null
-              ? DateTime.parse(json['due_date'])
+              ? DateTime.parse(json['due_date']).toLocal()
               : DateTime.now(),
           status: _parseStatus(json['status']?.toString() ?? 'pending'),
           createdAt: json['created_at'] != null
-              ? DateTime.parse(json['created_at'])
+              ? DateTime.parse(json['created_at']).toLocal()
               : DateTime.now(),
         );
       }).toList();
@@ -30,14 +37,14 @@ class BillingRepository {
     }
   }
 
-  // Inserir uma nova fatura
+  // Inserir uma nova fatura (datas salvas em UTC)
   Future<void> createInvoice(InvoiceEntity invoice) async {
     try {
       await _supabase.from('invoices').insert({
         'customer_id': invoice.customerId,
         'customer_name': invoice.customerName,
         'value': invoice.amount,
-        'due_date': invoice.dueDate.toIso8601String(),
+        'due_date': invoice.dueDate.toUtc().toIso8601String(),
         'status': invoice.status.name,
       });
     } catch (e) {
@@ -65,7 +72,6 @@ class BillingRepository {
     }
   }
 
-  // Conversão de String para o Enum InvoiceStatus
   InvoiceStatus _parseStatus(String statusStr) {
     switch (statusStr) {
       case 'pending':

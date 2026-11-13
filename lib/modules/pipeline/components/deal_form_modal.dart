@@ -1,5 +1,6 @@
 // lib/modules/pipeline/components/deal_form_modal.dart
 import 'package:flutter/material.dart';
+import '../../customers/domain/entities/customer_entity.dart';
 import '../../customers/presentation/customer_controller.dart';
 import '../models/deal_entity.dart';
 
@@ -21,8 +22,8 @@ class _DealFormModalState extends State<DealFormModal> {
   final _formKey = GlobalKey<FormState>();
   final _titleController = TextEditingController();
   final _valueController = TextEditingController();
-  
-  dynamic _selectedCustomer;
+
+  String? _selectedCustomerId;
   DealStage _selectedStage = DealStage.potential;
 
   @override
@@ -30,6 +31,14 @@ class _DealFormModalState extends State<DealFormModal> {
     _titleController.dispose();
     _valueController.dispose();
     super.dispose();
+  }
+
+  Customer? _findSelectedCustomer(List<Customer> customers) {
+    if (_selectedCustomerId == null) return null;
+    for (final c in customers) {
+      if (c.id == _selectedCustomerId) return c;
+    }
+    return null;
   }
 
   @override
@@ -59,11 +68,12 @@ class _DealFormModalState extends State<DealFormModal> {
                 TextFormField(
                   controller: _titleController,
                   decoration: const InputDecoration(labelText: 'Título da Oportunidade'),
-                  validator: (value) => value == null || value.isEmpty ? 'Informe o título' : null,
+                  validator: (value) =>
+                      value == null || value.trim().isEmpty ? 'Informe o título' : null,
                 ),
                 const SizedBox(height: 12),
-                
-                // Seletor Dinâmico de Clientes Cadastrados
+
+                // Seletor Dinâmico de Clientes Cadastrados por ID (String)
                 AnimatedBuilder(
                   animation: widget.customerController,
                   builder: (context, child) {
@@ -79,21 +89,31 @@ class _DealFormModalState extends State<DealFormModal> {
                       );
                     }
 
-                    return DropdownButtonFormField<dynamic>(
-                      initialValue: _selectedCustomer,
+                    final validSelectedId = customers.any((c) => c.id == _selectedCustomerId)
+                        ? _selectedCustomerId
+                        : null;
+
+                    return DropdownButtonFormField<String>(
+                      key: ValueKey(validSelectedId),
+                      initialValue: validSelectedId,
+                      isExpanded: true,
                       decoration: const InputDecoration(labelText: 'Selecione o Cliente'),
                       items: customers.map((customer) {
-                        return DropdownMenuItem<dynamic>(
-                          value: customer,
-                          child: Text(customer.name),
+                        return DropdownMenuItem<String>(
+                          value: customer.id,
+                          child: Text(
+                            customer.name,
+                            overflow: TextOverflow.ellipsis,
+                          ),
                         );
                       }).toList(),
-                      onChanged: (customer) {
+                      onChanged: (customerId) {
                         setState(() {
-                          _selectedCustomer = customer;
+                          _selectedCustomerId = customerId;
                         });
                       },
-                      validator: (value) => value == null ? 'Selecione um cliente' : null,
+                      validator: (value) =>
+                          value == null || value.isEmpty ? 'Selecione um cliente' : null,
                     );
                   },
                 ),
@@ -101,12 +121,20 @@ class _DealFormModalState extends State<DealFormModal> {
                 TextFormField(
                   controller: _valueController,
                   decoration: const InputDecoration(labelText: 'Valor (R\$)'),
-                  keyboardType: TextInputType.number,
-                  validator: (value) => value == null || double.tryParse(value) == null ? 'Informe um valor válido' : null,
+                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                  validator: (value) {
+                    final parsed = double.tryParse(
+                      (value ?? '').replaceAll(',', '.').trim(),
+                    );
+                    return parsed == null || parsed <= 0
+                        ? 'Informe um valor válido'
+                        : null;
+                  },
                 ),
                 const SizedBox(height: 12),
                 DropdownButtonFormField<DealStage>(
                   initialValue: _selectedStage,
+                  isExpanded: true,
                   decoration: const InputDecoration(labelText: 'Etapa Inicial'),
                   items: DealStage.values.map((stage) {
                     return DropdownMenuItem(
@@ -133,13 +161,21 @@ class _DealFormModalState extends State<DealFormModal> {
                     const SizedBox(width: 8),
                     ElevatedButton(
                       onPressed: () {
-                        if (_formKey.currentState!.validate() && _selectedCustomer != null) {
+                        final selectedCustomer = _findSelectedCustomer(
+                          widget.customerController.customers,
+                        );
+                        if (_formKey.currentState!.validate() &&
+                            selectedCustomer != null) {
+                          final parsedValue = double.tryParse(
+                                _valueController.text.replaceAll(',', '.').trim(),
+                              ) ??
+                              0.0;
                           final newDeal = DealEntity(
                             id: '',
-                            customerId: _selectedCustomer.id,
-                            customerName: _selectedCustomer.name,
-                            title: _titleController.text,
-                            value: double.tryParse(_valueController.text) ?? 0.0,
+                            customerId: selectedCustomer.id,
+                            customerName: selectedCustomer.name,
+                            title: _titleController.text.trim(),
+                            value: parsedValue,
                             stage: _selectedStage,
                             createdAt: DateTime.now(),
                           );

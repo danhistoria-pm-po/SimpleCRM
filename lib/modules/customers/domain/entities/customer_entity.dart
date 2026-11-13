@@ -14,7 +14,7 @@ class Customer {
   final String name;
   final String? phone;
   final String? email;
-  final String? address; // Campo de endereço adicionado
+  final String? address;
   final CustomerStatus status;
   final String? notes;
   final DateTime createdAt;
@@ -55,4 +55,13 @@ class Customer {
       updatedAt: updatedAt ?? this.updatedAt,
     );
   }
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    return other is Customer && other.id == id;
+  }
+
+  @override
+  int get hashCode => id.hashCode;
 }

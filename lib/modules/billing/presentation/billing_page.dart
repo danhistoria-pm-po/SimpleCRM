@@ -22,12 +22,14 @@ class _BillingPageState extends State<BillingPage> {
   @override
   void initState() {
     super.initState();
+    _customerController.ensureLoaded();
     _controller.loadInvoices();
   }
 
   @override
   void dispose() {
     _controller.dispose();
+    _authController.dispose();
     super.dispose();
   }
 
@@ -71,128 +73,22 @@ class _BillingPageState extends State<BillingPage> {
   }
 
   void _showAddInvoiceModal() {
-    final amountController = TextEditingController();
-    Customer? selectedCustomer;
-    DateTime selectedDueDate = DateTime.now().add(const Duration(days: 7));
-
     showDialog(
       context: context,
       builder: (dialogContext) {
-        return StatefulBuilder(
-          builder: (context, setModalState) {
-            return AlertDialog(
-              title: const Text('Nova Fatura'),
-              content: SingleChildScrollView(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    AnimatedBuilder(
-                      animation: _customerController,
-                      builder: (context, _) {
-                        final customers = _customerController.customers;
-                        if (customers.isEmpty) {
-                          return Text(
-                            'Nenhum cliente cadastrado. Cadastre um cliente primeiro na aba Clientes.',
-                            style: TextStyle(color: Colors.red.shade700, fontSize: 12),
-                          );
-                        }
-                        return DropdownButtonFormField<Customer>(
-                          initialValue: selectedCustomer,
-                          decoration: const InputDecoration(labelText: 'Cliente *'),
-                          items: customers.map((c) {
-                            return DropdownMenuItem<Customer>(
-                              value: c,
-                              child: Text(c.name),
-                            );
-                          }).toList(),
-                          onChanged: (val) {
-                            setModalState(() {
-                              selectedCustomer = val;
-                            });
-                          },
-                        );
-                      },
-                    ),
-                    const SizedBox(height: 12),
-                    TextField(
-                      controller: amountController,
-                      decoration: const InputDecoration(labelText: 'Valor (R\$) *'),
-                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                    ),
-                    const SizedBox(height: 16),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text('Vencimento: ${_formatDate(selectedDueDate)}'),
-                        TextButton.icon(
-                          onPressed: () async {
-                            final picked = await showDatePicker(
-                              context: context,
-                              initialDate: selectedDueDate,
-                              firstDate: DateTime(2020),
-                              lastDate: DateTime(2100),
-                            );
-                            if (picked != null) {
-                              setModalState(() {
-                                selectedDueDate = picked;
-                              });
-                            }
-                          },
-                          icon: const Icon(Icons.calendar_today, size: 16),
-                          label: const Text('Alterar'),
-                        ),
-                      ],
-                    ),
-                  ],
+        return _InvoiceFormDialog(
+          customerController: _customerController,
+          onSave: (newInvoice) async {
+            final ok = await _controller.createInvoice(newInvoice);
+            if (!mounted) return;
+            if (!ok && _controller.errorMessage != null) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(_controller.errorMessage!),
+                  backgroundColor: Colors.red,
                 ),
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(dialogContext),
-                  child: const Text('Cancelar'),
-                ),
-                ElevatedButton(
-                  onPressed: () async {
-                    final parsedAmount = double.tryParse(
-                      amountController.text.replaceAll(',', '.').trim(),
-                    );
-                    if (selectedCustomer == null || parsedAmount == null || parsedAmount <= 0) {
-                      ScaffoldMessenger.of(this.context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Selecione um cliente e informe um valor válido.'),
-                          backgroundColor: Colors.red,
-                        ),
-                      );
-                      return;
-                    }
-
-                    final newInvoice = InvoiceEntity(
-                      id: '',
-                      customerId: selectedCustomer!.id,
-                      customerName: selectedCustomer!.name,
-                      amount: parsedAmount,
-                      dueDate: selectedDueDate,
-                      status: InvoiceStatus.pending,
-                      createdAt: DateTime.now(),
-                    );
-
-                    Navigator.pop(dialogContext);
-                    final ok = await _controller.createInvoice(newInvoice);
-                    if (!mounted) return;
-                    if (!ok && _controller.errorMessage != null) {
-                      ScaffoldMessenger.of(this.context).showSnackBar(
-                        SnackBar(
-                          content: Text(_controller.errorMessage!),
-                          backgroundColor: Colors.red,
-                        ),
-                      );
-                    }
-                  },
-                  child: const Text('Salvar'),
-                ),
-              ],
-            );
+              );
+            }
           },
         );
       },
@@ -209,7 +105,17 @@ class _BillingPageState extends State<BillingPage> {
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
-            onPressed: () => _controller.loadInvoices(),
+            onPressed: () async {
+              final ok = await _controller.loadInvoices(silent: true);
+              if (!ok && context.mounted && _controller.errorMessage != null) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(_controller.errorMessage!),
+                    backgroundColor: Colors.red,
+                  ),
+                );
+              }
+            },
             tooltip: 'Atualizar Faturas',
           ),
           IconButton(
@@ -232,10 +138,21 @@ class _BillingPageState extends State<BillingPage> {
             return Center(
               child: Padding(
                 padding: const EdgeInsets.all(16.0),
-                child: Text(
-                  _controller.errorMessage!,
-                  style: const TextStyle(color: Colors.red, fontSize: 16),
-                  textAlign: TextAlign.center,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      _controller.errorMessage!,
+                      style: const TextStyle(color: Colors.red, fontSize: 16),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 12),
+                    ElevatedButton.icon(
+                      onPressed: () => _controller.loadInvoices(),
+                      icon: const Icon(Icons.refresh),
+                      label: const Text('Tentar novamente'),
+                    ),
+                  ],
                 ),
               ),
             );
@@ -290,26 +207,36 @@ class _BillingPageState extends State<BillingPage> {
                           PopupMenuButton<String>(
                             tooltip: 'Opções da Fatura',
                             onSelected: (value) async {
+                              bool ok = true;
                               if (value == 'delete') {
                                 final confirmed = await _confirmDeleteInvoice(
                                   invoice.customerName,
                                 );
                                 if (!confirmed || !mounted) return;
-                                await _controller.deleteInvoice(invoice.id);
+                                ok = await _controller.deleteInvoice(invoice.id);
                               } else if (value == 'paid') {
-                                await _controller.updateInvoiceStatus(
+                                ok = await _controller.updateInvoiceStatus(
                                   invoice.id,
                                   InvoiceStatus.paid,
                                 );
                               } else if (value == 'pending') {
-                                await _controller.updateInvoiceStatus(
+                                ok = await _controller.updateInvoiceStatus(
                                   invoice.id,
                                   InvoiceStatus.pending,
                                 );
                               } else if (value == 'cancelled') {
-                                await _controller.updateInvoiceStatus(
+                                ok = await _controller.updateInvoiceStatus(
                                   invoice.id,
                                   InvoiceStatus.cancelled,
+                                );
+                              }
+
+                              if (!ok && context.mounted && _controller.errorMessage != null) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(_controller.errorMessage!),
+                                    backgroundColor: Colors.red,
+                                  ),
                                 );
                               }
                             },
@@ -434,5 +361,163 @@ class _BillingPageState extends State<BillingPage> {
 
   String _formatDate(DateTime date) {
     return '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year}';
+  }
+}
+
+class _InvoiceFormDialog extends StatefulWidget {
+  final CustomerController customerController;
+  final Function(InvoiceEntity) onSave;
+
+  const _InvoiceFormDialog({
+    required this.customerController,
+    required this.onSave,
+  });
+
+  @override
+  State<_InvoiceFormDialog> createState() => _InvoiceFormDialogState();
+}
+
+class _InvoiceFormDialogState extends State<_InvoiceFormDialog> {
+  final _amountController = TextEditingController();
+  String? _selectedCustomerId;
+  DateTime _selectedDueDate = DateTime.now().add(const Duration(days: 7));
+
+  @override
+  void dispose() {
+    _amountController.dispose();
+    super.dispose();
+  }
+
+  Customer? _findSelectedCustomer(List<Customer> customers) {
+    if (_selectedCustomerId == null) return null;
+    for (final c in customers) {
+      if (c.id == _selectedCustomerId) return c;
+    }
+    return null;
+  }
+
+  String _formatDate(DateTime date) {
+    return '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year}';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Nova Fatura'),
+      content: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            AnimatedBuilder(
+              animation: widget.customerController,
+              builder: (context, _) {
+                final customers = widget.customerController.customers;
+                if (customers.isEmpty) {
+                  return Text(
+                    'Nenhum cliente cadastrado. Cadastre um cliente primeiro na aba Clientes.',
+                    style: TextStyle(color: Colors.red.shade700, fontSize: 12),
+                  );
+                }
+
+                final validSelectedId = customers.any((c) => c.id == _selectedCustomerId)
+                    ? _selectedCustomerId
+                    : null;
+
+                return DropdownButtonFormField<String>(
+                  key: ValueKey(validSelectedId),
+                  initialValue: validSelectedId,
+                  isExpanded: true,
+                  decoration: const InputDecoration(labelText: 'Cliente *'),
+                  items: customers.map((c) {
+                    return DropdownMenuItem<String>(
+                      value: c.id,
+                      child: Text(
+                        c.name,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    );
+                  }).toList(),
+                  onChanged: (val) {
+                    setState(() {
+                      _selectedCustomerId = val;
+                    });
+                  },
+                );
+              },
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: _amountController,
+              decoration: const InputDecoration(labelText: 'Valor (R\$) *'),
+              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            ),
+            const SizedBox(height: 16),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text('Vencimento: ${_formatDate(_selectedDueDate)}'),
+                TextButton.icon(
+                  onPressed: () async {
+                    final picked = await showDatePicker(
+                      context: context,
+                      initialDate: _selectedDueDate,
+                      firstDate: DateTime(2020),
+                      lastDate: DateTime(2100),
+                    );
+                    if (picked != null && mounted) {
+                      setState(() {
+                        _selectedDueDate = picked;
+                      });
+                    }
+                  },
+                  icon: const Icon(Icons.calendar_today, size: 16),
+                  label: const Text('Alterar'),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Cancelar'),
+        ),
+        ElevatedButton(
+          onPressed: () {
+            final selectedCustomer = _findSelectedCustomer(
+              widget.customerController.customers,
+            );
+            final parsedAmount = double.tryParse(
+              _amountController.text.replaceAll(',', '.').trim(),
+            );
+            if (selectedCustomer == null || parsedAmount == null || parsedAmount <= 0) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Selecione um cliente e informe um valor válido.'),
+                  backgroundColor: Colors.red,
+                ),
+              );
+              return;
+            }
+
+            final newInvoice = InvoiceEntity(
+              id: '',
+              customerId: selectedCustomer.id,
+              customerName: selectedCustomer.name,
+              amount: parsedAmount,
+              dueDate: _selectedDueDate,
+              status: InvoiceStatus.pending,
+              createdAt: DateTime.now(),
+            );
+
+            Navigator.pop(context);
+            widget.onSave(newInvoice);
+          },
+          child: const Text('Salvar'),
+        ),
+      ],
+    );
   }
 }

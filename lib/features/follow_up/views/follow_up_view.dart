@@ -21,12 +21,14 @@ class _FollowUpViewState extends State<FollowUpView> {
   @override
   void initState() {
     super.initState();
+    _customerController.ensureLoaded();
     _controller.loadFollowUps();
   }
 
   @override
   void dispose() {
     _controller.dispose();
+    _authController.dispose();
     super.dispose();
   }
 
@@ -64,6 +66,29 @@ class _FollowUpViewState extends State<FollowUpView> {
     return '';
   }
 
+  void _showAddFollowUpModal() {
+    showDialog(
+      context: context,
+      builder: (dialogContext) {
+        return _FollowUpFormDialog(
+          customerController: _customerController,
+          onSave: (newFollowUp) async {
+            final ok = await _controller.addFollowUp(newFollowUp);
+            if (!mounted) return;
+            if (!ok && _controller.errorMessage != null) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(_controller.errorMessage!),
+                  backgroundColor: Colors.red,
+                ),
+              );
+            }
+          },
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -75,7 +100,17 @@ class _FollowUpViewState extends State<FollowUpView> {
           IconButton(
             icon: const Icon(Icons.refresh),
             tooltip: 'Atualizar',
-            onPressed: () => _controller.loadFollowUps(),
+            onPressed: () async {
+              final ok = await _controller.loadFollowUps(silent: true);
+              if (!ok && context.mounted && _controller.errorMessage != null) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(_controller.errorMessage!),
+                    backgroundColor: Colors.red,
+                  ),
+                );
+              }
+            },
           ),
           IconButton(
             icon: const Icon(Icons.logout),
@@ -97,10 +132,21 @@ class _FollowUpViewState extends State<FollowUpView> {
             return Center(
               child: Padding(
                 padding: const EdgeInsets.all(16.0),
-                child: Text(
-                  _controller.errorMessage!,
-                  style: const TextStyle(color: Colors.red, fontSize: 16),
-                  textAlign: TextAlign.center,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      _controller.errorMessage!,
+                      style: const TextStyle(color: Colors.red, fontSize: 16),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 12),
+                    ElevatedButton.icon(
+                      onPressed: () => _controller.loadFollowUps(),
+                      icon: const Icon(Icons.refresh),
+                      label: const Text('Tentar novamente'),
+                    ),
+                  ],
                 ),
               ),
             );
@@ -171,14 +217,26 @@ class _FollowUpViewState extends State<FollowUpView> {
                             ),
                             tooltip: 'Excluir Follow-up',
                             onPressed: () async {
-                              final confirmed = await _confirmDeleteFollowUp(item.title);
-                              if (!confirmed || !mounted) return;
-                              await _controller.deleteFollowUp(item.id);
+                              final confirmed =
+                                  await _confirmDeleteFollowUp(item.title);
+                              if (!confirmed || !context.mounted) return;
+                              final ok = await _controller.deleteFollowUp(item.id);
+                              if (!ok &&
+                                  context.mounted &&
+                                  _controller.errorMessage != null) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(_controller.errorMessage!),
+                                    backgroundColor: Colors.red,
+                                  ),
+                                );
+                              }
                             },
                           ),
                         ],
                       ),
-                      if (item.description != null && item.description!.isNotEmpty) ...[
+                      if (item.description != null &&
+                          item.description!.isNotEmpty) ...[
                         const SizedBox(height: 8),
                         Text(
                           item.description!,
@@ -193,9 +251,20 @@ class _FollowUpViewState extends State<FollowUpView> {
                             children: [
                               Checkbox(
                                 value: item.isReceived,
-                                onChanged: (val) {
+                                onChanged: (val) async {
                                   if (val != null) {
-                                    _controller.toggleReceived(item, val);
+                                    final ok =
+                                        await _controller.toggleReceived(item, val);
+                                    if (!ok &&
+                                        context.mounted &&
+                                        _controller.errorMessage != null) {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        SnackBar(
+                                          content: Text(_controller.errorMessage!),
+                                          backgroundColor: Colors.red,
+                                        ),
+                                      );
+                                    }
                                   }
                                 },
                               ),
@@ -223,7 +292,7 @@ class _FollowUpViewState extends State<FollowUpView> {
         },
       ),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => _showAddFollowUpModal(context),
+        onPressed: _showAddFollowUpModal,
         backgroundColor: Colors.indigo,
         foregroundColor: Colors.white,
         icon: const Icon(Icons.add_task),
@@ -266,142 +335,172 @@ class _FollowUpViewState extends State<FollowUpView> {
   String _formatDate(DateTime date) {
     return '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year}';
   }
+}
 
-  void _showAddFollowUpModal(BuildContext context) {
-    final titleController = TextEditingController();
-    final descController = TextEditingController();
-    Customer? selectedCustomer;
-    DateTime scheduledDate = DateTime.now().add(const Duration(days: 7));
+class _FollowUpFormDialog extends StatefulWidget {
+  final CustomerController customerController;
+  final Function(FollowUpModel) onSave;
 
-    showDialog(
-      context: context,
-      builder: (dialogContext) {
-        return StatefulBuilder(
-          builder: (context, setModalState) {
-            return AlertDialog(
-              title: const Text('Novo Follow-up'),
-              content: SingleChildScrollView(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    AnimatedBuilder(
-                      animation: _customerController,
-                      builder: (context, _) {
-                        final customers = _customerController.customers;
-                        if (customers.isEmpty) {
-                          return Text(
-                            'Nenhum cliente cadastrado. Cadastre um cliente primeiro na aba Clientes.',
-                            style: TextStyle(color: Colors.red.shade700, fontSize: 12),
-                          );
-                        }
-                        return DropdownButtonFormField<Customer>(
-                          initialValue: selectedCustomer,
-                          decoration: const InputDecoration(labelText: 'Cliente *'),
-                          items: customers.map((c) {
-                            return DropdownMenuItem<Customer>(
-                              value: c,
-                              child: Text(c.name),
-                            );
-                          }).toList(),
-                          onChanged: (val) {
-                            setModalState(() {
-                              selectedCustomer = val;
-                            });
-                          },
-                        );
-                      },
-                    ),
-                    const SizedBox(height: 12),
-                    TextField(
-                      controller: titleController,
-                      decoration: const InputDecoration(
-                        labelText: 'Título / Assunto *',
+  const _FollowUpFormDialog({
+    required this.customerController,
+    required this.onSave,
+  });
+
+  @override
+  State<_FollowUpFormDialog> createState() => _FollowUpFormDialogState();
+}
+
+class _FollowUpFormDialogState extends State<_FollowUpFormDialog> {
+  final _titleController = TextEditingController();
+  final _descController = TextEditingController();
+  String? _selectedCustomerId;
+  DateTime _scheduledDate = DateTime.now().add(const Duration(days: 7));
+
+  @override
+  void dispose() {
+    _titleController.dispose();
+    _descController.dispose();
+    super.dispose();
+  }
+
+  Customer? _findSelectedCustomer(List<Customer> customers) {
+    if (_selectedCustomerId == null) return null;
+    for (final c in customers) {
+      if (c.id == _selectedCustomerId) return c;
+    }
+    return null;
+  }
+
+  String _formatDate(DateTime date) {
+    return '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year}';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Novo Follow-up'),
+      content: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            AnimatedBuilder(
+              animation: widget.customerController,
+              builder: (context, _) {
+                final customers = widget.customerController.customers;
+                if (customers.isEmpty) {
+                  return Text(
+                    'Nenhum cliente cadastrado. Cadastre um cliente primeiro na aba Clientes.',
+                    style: TextStyle(color: Colors.red.shade700, fontSize: 12),
+                  );
+                }
+
+                final validSelectedId = customers.any((c) => c.id == _selectedCustomerId)
+                    ? _selectedCustomerId
+                    : null;
+
+                return DropdownButtonFormField<String>(
+                  key: ValueKey(validSelectedId),
+                  initialValue: validSelectedId,
+                  isExpanded: true,
+                  decoration: const InputDecoration(labelText: 'Cliente *'),
+                  items: customers.map((c) {
+                    return DropdownMenuItem<String>(
+                      value: c.id,
+                      child: Text(
+                        c.name,
+                        overflow: TextOverflow.ellipsis,
                       ),
-                    ),
-                    const SizedBox(height: 12),
-                    TextField(
-                      controller: descController,
-                      decoration: const InputDecoration(
-                        labelText: 'Descrição / Observações',
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text('Agendado p/: ${_formatDate(scheduledDate)}'),
-                        TextButton.icon(
-                          onPressed: () async {
-                            final picked = await showDatePicker(
-                              context: context,
-                              initialDate: scheduledDate,
-                              firstDate: DateTime(2020),
-                              lastDate: DateTime(2100),
-                            );
-                            if (picked != null) {
-                              setModalState(() {
-                                scheduledDate = picked;
-                              });
-                            }
-                          },
-                          icon: const Icon(Icons.calendar_today, size: 16),
-                          label: const Text('Alterar'),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(dialogContext),
-                  child: const Text('Cancelar'),
-                ),
-                ElevatedButton(
-                  onPressed: () async {
-                    if (selectedCustomer == null || titleController.text.trim().isEmpty) {
-                      ScaffoldMessenger.of(this.context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Selecione o cliente e informe o título do follow-up.'),
-                          backgroundColor: Colors.red,
-                        ),
-                      );
-                      return;
-                    }
-
-                    final newFollowUp = FollowUpModel(
-                      id: '',
-                      customerId: selectedCustomer!.id,
-                      title: titleController.text.trim(),
-                      description: descController.text.trim().isNotEmpty
-                          ? descController.text.trim()
-                          : null,
-                      scheduledDate: scheduledDate,
-                      status: 'pendente',
-                      isReceived: false,
-                      createdAt: DateTime.now(),
                     );
-
-                    Navigator.pop(dialogContext);
-                    final ok = await _controller.addFollowUp(newFollowUp);
-                    if (!mounted) return;
-                    if (!ok && _controller.errorMessage != null) {
-                      ScaffoldMessenger.of(this.context).showSnackBar(
-                        SnackBar(
-                          content: Text(_controller.errorMessage!),
-                          backgroundColor: Colors.red,
-                        ),
-                      );
+                  }).toList(),
+                  onChanged: (val) {
+                    setState(() {
+                      _selectedCustomerId = val;
+                    });
+                  },
+                );
+              },
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: _titleController,
+              decoration: const InputDecoration(
+                labelText: 'Título / Assunto *',
+              ),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: _descController,
+              decoration: const InputDecoration(
+                labelText: 'Descrição / Observações',
+              ),
+            ),
+            const SizedBox(height: 16),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text('Agendado p/: ${_formatDate(_scheduledDate)}'),
+                TextButton.icon(
+                  onPressed: () async {
+                    final picked = await showDatePicker(
+                      context: context,
+                      initialDate: _scheduledDate,
+                      firstDate: DateTime(2020),
+                      lastDate: DateTime(2100),
+                    );
+                    if (picked != null && mounted) {
+                      setState(() {
+                        _scheduledDate = picked;
+                      });
                     }
                   },
-                  child: const Text('Guardar'),
+                  icon: const Icon(Icons.calendar_today, size: 16),
+                  label: const Text('Alterar'),
                 ),
               ],
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Cancelar'),
+        ),
+        ElevatedButton(
+          onPressed: () {
+            final selectedCustomer = _findSelectedCustomer(
+              widget.customerController.customers,
             );
+            if (selectedCustomer == null || _titleController.text.trim().isEmpty) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Selecione o cliente e informe o título do follow-up.'),
+                  backgroundColor: Colors.red,
+                ),
+              );
+              return;
+            }
+
+            final newFollowUp = FollowUpModel(
+              id: '',
+              customerId: selectedCustomer.id,
+              title: _titleController.text.trim(),
+              description: _descController.text.trim().isNotEmpty
+                  ? _descController.text.trim()
+                  : null,
+              scheduledDate: _scheduledDate,
+              status: 'pendente',
+              isReceived: false,
+              createdAt: DateTime.now(),
+            );
+
+            Navigator.pop(context);
+            widget.onSave(newFollowUp);
           },
-        );
-      },
+          child: const Text('Guardar'),
+        ),
+      ],
     );
   }
 }

@@ -1,4 +1,5 @@
 // lib/main.dart
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'home_page.dart';
@@ -45,20 +46,26 @@ class AuthCheckPage extends StatefulWidget {
 }
 
 class _AuthCheckPageState extends State<AuthCheckPage> {
+  StreamSubscription<AuthState>? _authSubscription;
+
   @override
   void initState() {
     super.initState();
-    Supabase.instance.client.auth.onAuthStateChange.listen((data) {
+    _authSubscription = Supabase.instance.client.auth.onAuthStateChange.listen((data) {
       final AuthChangeEvent event = data.event;
-      
+
       if (event == AuthChangeEvent.signedOut) {
-        // Limpa os dados do usuário que acabou de sair
-        CustomerController().reset(); 
+        CustomerController().reset();
       } else if (event == AuthChangeEvent.signedIn) {
-        // AJUSTE CRÍTICO: Força o Singleton a recarregar a lista para o novo usuário
-        CustomerController().loadCustomers(); 
+        CustomerController().ensureLoaded();
       }
     });
+  }
+
+  @override
+  void dispose() {
+    _authSubscription?.cancel();
+    super.dispose();
   }
 
   @override

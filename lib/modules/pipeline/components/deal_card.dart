@@ -92,7 +92,16 @@ class DealCard extends StatelessWidget {
                           children: [
                             Icon(Icons.delete, size: 16, color: Colors.redAccent),
                             SizedBox(width: 8),
-                            Text('Excluir Oportunidade', style: TextStyle(fontSize: 12, color: Colors.redAccent, fontWeight: FontWeight.bold)),
+                            Flexible(
+                              child: Text(
+                                'Excluir Oportunidade',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.redAccent,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
                           ],
                         ),
                       ),

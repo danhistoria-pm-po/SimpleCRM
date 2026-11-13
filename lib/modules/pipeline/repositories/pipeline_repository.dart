@@ -3,15 +3,21 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/deal_entity.dart';
 
 class PipelineRepository {
-  final SupabaseClient _supabase = Supabase.instance.client;
+  final SupabaseClient? client;
 
-  // Buscar todas as oportunidades da tabela 'deals'
+  PipelineRepository({this.client});
+
+  SupabaseClient get _supabase => client ?? Supabase.instance.client;
+
+  // Buscar todas as oportunidades da tabela 'deals' ordenadas por created_at desc
   Future<List<DealEntity>> fetchDeals() async {
     try {
-      final response = await _supabase.from('deals').select();
+      final response = await _supabase
+          .from('deals')
+          .select()
+          .order('created_at', ascending: false);
 
       return (response as List).map((data) {
-        // Mapeia a string do banco para o enum DealStage corretamente
         DealStage stageVal = DealStage.potential;
         final stageStr = data['stage'] as String?;
         if (stageStr == 'inNegotiation') stageVal = DealStage.inNegotiation;
@@ -20,17 +26,18 @@ class PipelineRepository {
         if (stageStr == 'lost') stageVal = DealStage.lost;
 
         return DealEntity(
-          id: data['id'] ?? '',
+          id: data['id']?.toString() ?? '',
           title: data['title'] ?? '',
-          customerId: data['customer_id'] ?? '',
+          customerId: data['customer_id']?.toString() ?? '',
           customerName: data['customer_name'] ?? '',
           value: (data['value'] != null) ? (data['value'] as num).toDouble() : 0.0,
           stage: stageVal,
-          createdAt: data['created_at'] != null ? DateTime.parse(data['created_at']) : DateTime.now(),
+          createdAt: data['created_at'] != null
+              ? DateTime.parse(data['created_at']).toLocal()
+              : DateTime.now(),
         );
       }).toList();
     } catch (e) {
-      // CORRIGIDO: Repassa o erro para o Controller avisar a tela
       rethrow;
     }
   }
@@ -44,10 +51,8 @@ class PipelineRepository {
         'customer_name': deal.customerName,
         'value': deal.value,
         'stage': deal.stage.name,
-        // O user_id é preenchido automaticamente pelo Supabase (default auth.uid())
       });
     } catch (e) {
-      // CORRIGIDO: Repassa o erro
       rethrow;
     }
   }
@@ -59,7 +64,6 @@ class PipelineRepository {
         'stage': newStage.name,
       }).eq('id', id);
     } catch (e) {
-      // CORRIGIDO: Repassa o erro
       rethrow;
     }
   }
@@ -69,7 +73,6 @@ class PipelineRepository {
     try {
       await _supabase.from('deals').delete().eq('id', id);
     } catch (e) {
-      // CORRIGIDO: Repassa o erro
       rethrow;
     }
   }

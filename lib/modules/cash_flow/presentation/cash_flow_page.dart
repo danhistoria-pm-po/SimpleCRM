@@ -24,6 +24,7 @@ class _CashFlowPageState extends State<CashFlowPage> {
   @override
   void dispose() {
     _controller.dispose();
+    _authController.dispose();
     super.dispose();
   }
 
@@ -53,102 +54,21 @@ class _CashFlowPageState extends State<CashFlowPage> {
   }
 
   void _showAddEntryModal() {
-    final descriptionController = TextEditingController();
-    final amountController = TextEditingController();
-    CashFlowType selectedType = CashFlowType.income;
-
     showDialog(
       context: context,
       builder: (dialogContext) {
-        return StatefulBuilder(
-          builder: (context, setModalState) {
-            return AlertDialog(
-              title: const Text('Novo Lançamento no Caixa'),
-              content: SingleChildScrollView(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    TextField(
-                      controller: descriptionController,
-                      decoration: const InputDecoration(labelText: 'Descrição *'),
-                    ),
-                    const SizedBox(height: 12),
-                    TextField(
-                      controller: amountController,
-                      decoration: const InputDecoration(labelText: 'Valor (R\$) *'),
-                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                    ),
-                    const SizedBox(height: 12),
-                    DropdownButtonFormField<CashFlowType>(
-                      initialValue: selectedType,
-                      decoration: const InputDecoration(labelText: 'Tipo de Lançamento'),
-                      items: const [
-                        DropdownMenuItem(
-                          value: CashFlowType.income,
-                          child: Text('Entrada (Receita)'),
-                        ),
-                        DropdownMenuItem(
-                          value: CashFlowType.expense,
-                          child: Text('Saída (Despesa)'),
-                        ),
-                      ],
-                      onChanged: (val) {
-                        if (val != null) {
-                          setModalState(() {
-                            selectedType = val;
-                          });
-                        }
-                      },
-                    ),
-                  ],
+        return _CashFlowEntryFormDialog(
+          onSave: (entry) async {
+            final ok = await _controller.createEntry(entry);
+            if (!mounted) return;
+            if (!ok && _controller.errorMessage != null) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(_controller.errorMessage!),
+                  backgroundColor: Colors.red,
                 ),
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(dialogContext),
-                  child: const Text('Cancelar'),
-                ),
-                ElevatedButton(
-                  onPressed: () async {
-                    final parsedAmount = double.tryParse(
-                      amountController.text.replaceAll(',', '.').trim(),
-                    );
-                    if (descriptionController.text.trim().isEmpty ||
-                        parsedAmount == null ||
-                        parsedAmount <= 0) {
-                      ScaffoldMessenger.of(this.context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Informe uma descrição e um valor válido.'),
-                          backgroundColor: Colors.red,
-                        ),
-                      );
-                      return;
-                    }
-
-                    final entry = CashFlowEntryEntity(
-                      id: '',
-                      description: descriptionController.text.trim(),
-                      amount: parsedAmount,
-                      type: selectedType,
-                      date: DateTime.now(),
-                    );
-
-                    Navigator.pop(dialogContext);
-                    final ok = await _controller.createEntry(entry);
-                    if (!mounted) return;
-                    if (!ok && _controller.errorMessage != null) {
-                      ScaffoldMessenger.of(this.context).showSnackBar(
-                        SnackBar(
-                          content: Text(_controller.errorMessage!),
-                          backgroundColor: Colors.red,
-                        ),
-                      );
-                    }
-                  },
-                  child: const Text('Salvar'),
-                ),
-              ],
-            );
+              );
+            }
           },
         );
       },
@@ -165,7 +85,17 @@ class _CashFlowPageState extends State<CashFlowPage> {
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
-            onPressed: () => _controller.loadEntries(),
+            onPressed: () async {
+              final ok = await _controller.loadEntries(silent: true);
+              if (!ok && context.mounted && _controller.errorMessage != null) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(_controller.errorMessage!),
+                    backgroundColor: Colors.red,
+                  ),
+                );
+              }
+            },
             tooltip: 'Atualizar',
           ),
           IconButton(
@@ -188,10 +118,21 @@ class _CashFlowPageState extends State<CashFlowPage> {
             return Center(
               child: Padding(
                 padding: const EdgeInsets.all(16.0),
-                child: Text(
-                  _controller.errorMessage!,
-                  style: const TextStyle(color: Colors.red, fontSize: 16),
-                  textAlign: TextAlign.center,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      _controller.errorMessage!,
+                      style: const TextStyle(color: Colors.red, fontSize: 16),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 12),
+                    ElevatedButton.icon(
+                      onPressed: () => _controller.loadEntries(),
+                      icon: const Icon(Icons.refresh),
+                      label: const Text('Tentar novamente'),
+                    ),
+                  ],
                 ),
               ),
             );
@@ -267,8 +208,18 @@ class _CashFlowPageState extends State<CashFlowPage> {
                                       final confirmed = await _confirmDeleteEntry(
                                         entry.description,
                                       );
-                                      if (!confirmed || !mounted) return;
-                                      await _controller.deleteEntry(entry.id);
+                                      if (!confirmed || !context.mounted) return;
+                                      final ok = await _controller.deleteEntry(entry.id);
+                                      if (!ok &&
+                                          context.mounted &&
+                                          _controller.errorMessage != null) {
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          SnackBar(
+                                            content: Text(_controller.errorMessage!),
+                                            backgroundColor: Colors.red,
+                                          ),
+                                        );
+                                      }
                                     },
                                   ),
                                 ],
@@ -310,5 +261,110 @@ class _CashFlowPageState extends State<CashFlowPage> {
 
   String _formatDate(DateTime date) {
     return '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year}';
+  }
+}
+
+class _CashFlowEntryFormDialog extends StatefulWidget {
+  final Function(CashFlowEntryEntity) onSave;
+
+  const _CashFlowEntryFormDialog({required this.onSave});
+
+  @override
+  State<_CashFlowEntryFormDialog> createState() => _CashFlowEntryFormDialogState();
+}
+
+class _CashFlowEntryFormDialogState extends State<_CashFlowEntryFormDialog> {
+  final _descriptionController = TextEditingController();
+  final _amountController = TextEditingController();
+  CashFlowType _selectedType = CashFlowType.income;
+
+  @override
+  void dispose() {
+    _descriptionController.dispose();
+    _amountController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Novo Lançamento no Caixa'),
+      content: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: _descriptionController,
+              decoration: const InputDecoration(labelText: 'Descrição *'),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: _amountController,
+              decoration: const InputDecoration(labelText: 'Valor (R\$) *'),
+              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            ),
+            const SizedBox(height: 12),
+            DropdownButtonFormField<CashFlowType>(
+              initialValue: _selectedType,
+              isExpanded: true,
+              decoration: const InputDecoration(labelText: 'Tipo de Lançamento'),
+              items: const [
+                DropdownMenuItem(
+                  value: CashFlowType.income,
+                  child: Text('Entrada (Receita)'),
+                ),
+                DropdownMenuItem(
+                  value: CashFlowType.expense,
+                  child: Text('Saída (Despesa)'),
+                ),
+              ],
+              onChanged: (val) {
+                if (val != null) {
+                  setState(() {
+                    _selectedType = val;
+                  });
+                }
+              },
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Cancelar'),
+        ),
+        ElevatedButton(
+          onPressed: () {
+            final parsedAmount = double.tryParse(
+              _amountController.text.replaceAll(',', '.').trim(),
+            );
+            if (_descriptionController.text.trim().isEmpty ||
+                parsedAmount == null ||
+                parsedAmount <= 0) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Informe uma descrição e um valor válido.'),
+                  backgroundColor: Colors.red,
+                ),
+              );
+              return;
+            }
+
+            final entry = CashFlowEntryEntity(
+              id: '',
+              description: _descriptionController.text.trim(),
+              amount: parsedAmount,
+              type: _selectedType,
+              date: DateTime.now(),
+            );
+
+            Navigator.pop(context);
+            widget.onSave(entry);
+          },
+          child: const Text('Salvar'),
+        ),
+      ],
+    );
   }
 }

@@ -35,16 +35,16 @@ class FollowUpModel {
       title: map['title'] ?? '',
       description: map['description'],
       scheduledDate: map['scheduled_date'] != null
-          ? DateTime.parse(map['scheduled_date'])
+          ? DateTime.parse(map['scheduled_date']).toLocal()
           : DateTime.now(),
       status: map['status'] ?? 'pendente',
       satisfactionScore: map['satisfaction_score'],
       isReceived: map['is_received'] ?? false,
       receivedDate: map['received_date'] != null
-          ? DateTime.parse(map['received_date'])
+          ? DateTime.parse(map['received_date']).toLocal()
           : null,
       createdAt: map['created_at'] != null
-          ? DateTime.parse(map['created_at'])
+          ? DateTime.parse(map['created_at']).toLocal()
           : DateTime.now(),
     );
   }
@@ -55,11 +55,11 @@ class FollowUpModel {
       'deal_id': dealId,
       'title': title,
       'description': description,
-      'scheduled_date': scheduledDate.toIso8601String(),
+      'scheduled_date': scheduledDate.toUtc().toIso8601String(),
       'status': status,
       'satisfaction_score': satisfactionScore,
       'is_received': isReceived,
-      'received_date': receivedDate?.toIso8601String(),
+      'received_date': receivedDate?.toUtc().toIso8601String(),
     };
   }
 
@@ -74,6 +74,7 @@ class FollowUpModel {
     int? satisfactionScore,
     bool? isReceived,
     DateTime? receivedDate,
+    bool clearReceivedDate = false,
     DateTime? createdAt,
   }) {
     return FollowUpModel(
@@ -86,7 +87,9 @@ class FollowUpModel {
       status: status ?? this.status,
       satisfactionScore: satisfactionScore ?? this.satisfactionScore,
       isReceived: isReceived ?? this.isReceived,
-      receivedDate: receivedDate ?? this.receivedDate,
+      receivedDate: clearReceivedDate
+          ? null
+          : (receivedDate ?? this.receivedDate),
       createdAt: createdAt ?? this.createdAt,
     );
   }

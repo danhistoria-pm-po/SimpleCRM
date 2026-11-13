@@ -3,7 +3,11 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/cash_flow_entry_entity.dart';
 
 class CashFlowRepository {
-  final SupabaseClient _supabase = Supabase.instance.client;
+  final SupabaseClient? client;
+
+  CashFlowRepository({this.client});
+
+  SupabaseClient get _supabase => client ?? Supabase.instance.client;
 
   Future<List<CashFlowEntryEntity>> fetchEntries() async {
     try {
@@ -21,7 +25,7 @@ class CashFlowRepository {
               ? CashFlowType.income
               : CashFlowType.expense,
           date: json['date'] != null
-              ? DateTime.parse(json['date'])
+              ? DateTime.parse(json['date']).toLocal()
               : DateTime.now(),
         );
       }).toList();
@@ -36,7 +40,7 @@ class CashFlowRepository {
         'description': entry.description,
         'value': entry.amount,
         'type': entry.type.name,
-        'date': entry.date.toIso8601String(),
+        'date': entry.date.toUtc().toIso8601String(),
       });
     } catch (e) {
       rethrow;

@@ -4,10 +4,15 @@ import '../models/deal_entity.dart';
 import '../repositories/pipeline_repository.dart';
 
 class PipelineController extends ChangeNotifier {
-  final PipelineRepository _repository = PipelineRepository();
+  final PipelineRepository _repository;
+
+  PipelineController({PipelineRepository? repository})
+      : _repository = repository ?? PipelineRepository();
 
   List<DealEntity> _deals = [];
   bool _isLoading = false;
+  bool _isRefreshing = false;
+  String? _errorMessage;
   String _searchQuery = '';
   DealStage? _selectedStageFilter;
 
@@ -15,66 +20,103 @@ class PipelineController extends ChangeNotifier {
     var filtered = _deals;
 
     if (_searchQuery.isNotEmpty) {
-      filtered = filtered.where((deal) =>
-          deal.title.toLowerCase().contains(_searchQuery.toLowerCase()) ||
-          deal.customerName.toLowerCase().contains(_searchQuery.toLowerCase())).toList();
+      filtered = filtered
+          .where((deal) =>
+              deal.title.toLowerCase().contains(_searchQuery.toLowerCase()) ||
+              deal.customerName.toLowerCase().contains(_searchQuery.toLowerCase()))
+          .toList();
     }
 
     if (_selectedStageFilter != null) {
-      filtered = filtered.where((deal) => deal.stage == _selectedStageFilter).toList();
+      filtered = filtered
+          .where((deal) => deal.stage == _selectedStageFilter)
+          .toList();
     }
 
-    return filtered;
+    return List.unmodifiable(filtered);
   }
 
   bool get isLoading => _isLoading;
+  bool get isRefreshing => _isRefreshing;
+  String? get errorMessage => _errorMessage;
   String get searchQuery => _searchQuery;
   DealStage? get selectedStageFilter => _selectedStageFilter;
 
-  Future<void> loadDeals() async {
-    _isLoading = true;
+  Future<bool> loadDeals({bool silent = false}) async {
+    if (!silent && _deals.isEmpty) {
+      _isLoading = true;
+    } else {
+      _isRefreshing = true;
+    }
+    _errorMessage = null;
     notifyListeners();
 
     try {
       _deals = await _repository.fetchDeals();
+      return true;
     } catch (e) {
-      debugPrint('Erro ao carregar do Supabase: $e');
-      rethrow; // CORRIGIDO: Repassa o erro para a tela
+      _errorMessage = e.toString().replaceAll('Exception: ', '');
+      debugPrint('Erro ao carregar do Supabase: $_errorMessage');
+      return false;
     } finally {
       _isLoading = false;
+      _isRefreshing = false;
       notifyListeners();
     }
   }
 
-  Future<void> addDeal(DealEntity deal) async {
+  Future<bool> addDeal(DealEntity deal) async {
     try {
+      _errorMessage = null;
       await _repository.createDeal(deal);
-      await loadDeals();
+      return await loadDeals(silent: true);
     } catch (e) {
-      debugPrint('Erro ao criar oportunidade: $e');
-      rethrow; // CORRIGIDO: Repassa o erro para a tela
+      _errorMessage = e.toString().replaceAll('Exception: ', '');
+      debugPrint('Erro ao criar oportunidade: $_errorMessage');
+      notifyListeners();
+      return false;
     }
   }
 
-  Future<void> updateDealStage(String id, DealStage newStage) async {
+  // Atualização otimista de estágio: não aciona isLoading e reverte em caso de erro
+  Future<bool> updateDealStage(String id, DealStage newStage) async {
+    final previousDeals = List<DealEntity>.from(_deals);
+    final index = _deals.indexWhere((d) => d.id == id);
+
+    if (index != -1) {
+      _deals[index] = _deals[index].copyWith(stage: newStage);
+      _errorMessage = null;
+      notifyListeners();
+    }
+
     try {
       await _repository.updateDealStage(id, newStage);
-      await loadDeals();
+      return true;
     } catch (e) {
-      debugPrint('Erro ao atualizar estágio: $e');
-      rethrow; // CORRIGIDO: Repassa o erro para a tela
+      _deals = previousDeals;
+      _errorMessage = e.toString().replaceAll('Exception: ', '');
+      debugPrint('Erro ao atualizar estágio: $_errorMessage');
+      notifyListeners();
+      return false;
     }
   }
 
-  // Método de exclusão independente direto no Kanban
-  Future<void> deleteDeal(String id) async {
+  // Exclusão otimista no Kanban com reversão em caso de falha
+  Future<bool> deleteDeal(String id) async {
+    final previousDeals = List<DealEntity>.from(_deals);
+    _deals.removeWhere((deal) => deal.id == id);
+    _errorMessage = null;
+    notifyListeners();
+
     try {
       await _repository.deleteDeal(id);
-      _deals.removeWhere((deal) => deal.id == id);
-      notifyListeners();
+      return true;
     } catch (e) {
-      debugPrint('Erro ao deletar oportunidade: $e');
-      rethrow; // CORRIGIDO: Repassa o erro para a tela
+      _deals = previousDeals;
+      _errorMessage = e.toString().replaceAll('Exception: ', '');
+      debugPrint('Erro ao deletar oportunidade: $_errorMessage');
+      notifyListeners();
+      return false;
     }
   }
 
