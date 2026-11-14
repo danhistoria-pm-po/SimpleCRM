@@ -284,45 +284,56 @@ class _CashFlowEntryFormDialogState extends State<_CashFlowEntryFormDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
+      insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
       title: const Text('Novo Lançamento no Caixa'),
-      content: SingleChildScrollView(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: _descriptionController,
-              decoration: const InputDecoration(labelText: 'Descrição *'),
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: _amountController,
-              decoration: const InputDecoration(labelText: 'Valor (R\$) *'),
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
-            ),
-            const SizedBox(height: 12),
-            DropdownButtonFormField<CashFlowType>(
-              initialValue: _selectedType,
-              isExpanded: true,
-              decoration: const InputDecoration(labelText: 'Tipo de Lançamento'),
-              items: const [
-                DropdownMenuItem(
-                  value: CashFlowType.income,
-                  child: Text('Entrada (Receita)'),
-                ),
-                DropdownMenuItem(
-                  value: CashFlowType.expense,
-                  child: Text('Saída (Despesa)'),
-                ),
-              ],
-              onChanged: (val) {
-                if (val != null) {
-                  setState(() {
-                    _selectedType = val;
-                  });
-                }
-              },
-            ),
-          ],
+      content: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 480),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              TextField(
+                controller: _descriptionController,
+                decoration: const InputDecoration(labelText: 'Descrição *'),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: _amountController,
+                decoration: const InputDecoration(labelText: 'Valor (R\$) *'),
+                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              ),
+              const SizedBox(height: 12),
+              DropdownButtonFormField<CashFlowType>(
+                initialValue: _selectedType,
+                isExpanded: true,
+                decoration: const InputDecoration(labelText: 'Tipo de Lançamento'),
+                items: const [
+                  DropdownMenuItem(
+                    value: CashFlowType.income,
+                    child: Text(
+                      'Entrada (Receita)',
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  DropdownMenuItem(
+                    value: CashFlowType.expense,
+                    child: Text(
+                      'Saída (Despesa)',
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+                onChanged: (val) {
+                  if (val != null) {
+                    setState(() {
+                      _selectedType = val;
+                    });
+                  }
+                },
+              ),
+            ],
+          ),
         ),
       ),
       actions: [

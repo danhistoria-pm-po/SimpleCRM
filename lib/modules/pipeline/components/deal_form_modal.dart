@@ -45,28 +45,18 @@ class _DealFormModalState extends State<DealFormModal> {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: AppColors.overlay,
-      child: Center(
-        child: Container(
-          width: 400,
-          padding: const EdgeInsets.all(24.0),
-          decoration: BoxDecoration(
-            color: AppColors.surface,
-            borderRadius: BorderRadius.circular(12.0),
-          ),
+    return AlertDialog(
+      insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+      title: const Text('Nova Oportunidade'),
+      content: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 480),
+        child: SingleChildScrollView(
           child: Form(
             key: _formKey,
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const Text(
-                  'Nova Oportunidade',
-                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 16),
                 TextFormField(
                   controller: _titleController,
                   decoration: const InputDecoration(labelText: 'Título da Oportunidade'),
@@ -139,7 +129,10 @@ class _DealFormModalState extends State<DealFormModal> {
                   items: DealStage.values.map((stage) {
                     return DropdownMenuItem(
                       value: stage,
-                      child: Text(_getStageLabel(stage)),
+                      child: Text(
+                        _getStageLabel(stage),
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     );
                   }).toList(),
                   onChanged: (stage) {
@@ -150,47 +143,40 @@ class _DealFormModalState extends State<DealFormModal> {
                     }
                   },
                 ),
-                const SizedBox(height: 24),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    TextButton(
-                      onPressed: () => Navigator.of(context).pop(),
-                      child: const Text('Cancelar'),
-                    ),
-                    const SizedBox(width: 8),
-                    ElevatedButton(
-                      onPressed: () {
-                        final selectedCustomer = _findSelectedCustomer(
-                          widget.customerController.customers,
-                        );
-                        if (_formKey.currentState!.validate() &&
-                            selectedCustomer != null) {
-                          final parsedValue =
-                              parseCurrency(_valueController.text) ?? 0.0;
-                          final newDeal = DealEntity(
-                            id: '',
-                            customerId: selectedCustomer.id,
-                            customerName: selectedCustomer.name,
-                            title: _titleController.text.trim(),
-                            value: parsedValue,
-                            stage: _selectedStage,
-                            createdAt: DateTime.now(),
-                          );
-
-                          widget.onSave(newDeal);
-                          Navigator.of(context).pop();
-                        }
-                      },
-                      child: const Text('Salvar'),
-                    ),
-                  ],
-                ),
               ],
             ),
           ),
         ),
       ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Cancelar'),
+        ),
+        ElevatedButton(
+          onPressed: () {
+            final selectedCustomer = _findSelectedCustomer(
+              widget.customerController.customers,
+            );
+            if (_formKey.currentState!.validate() && selectedCustomer != null) {
+              final parsedValue = parseCurrency(_valueController.text) ?? 0.0;
+              final newDeal = DealEntity(
+                id: '',
+                customerId: selectedCustomer.id,
+                customerName: selectedCustomer.name,
+                title: _titleController.text.trim(),
+                value: parsedValue,
+                stage: _selectedStage,
+                createdAt: DateTime.now(),
+              );
+
+              widget.onSave(newDeal);
+              Navigator.of(context).pop();
+            }
+          },
+          child: const Text('Salvar'),
+        ),
+      ],
     );
   }
 

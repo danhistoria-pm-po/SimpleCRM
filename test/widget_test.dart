@@ -152,4 +152,48 @@ void main() {
     expect(savedName, 'Maria Silva');
     expect(savedEmail, 'maria@silva.com');
   });
+
+  testWidgets('DealFormModal renderiza em 320x568 com viewInsets de teclado sem overflow', (
+    WidgetTester tester,
+  ) async {
+    tester.view.physicalSize = const Size(320, 568);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(() {
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+    });
+
+    final now = DateTime(2026, 11, 13);
+    final repo = _InMemoryCustomerRepository([
+      Customer(
+        id: 'c1',
+        name: 'Cliente Com Nome Muito Longo Para Testar Truncamento Em Tela Estreita',
+        createdAt: now,
+        updatedAt: now,
+      ),
+    ]);
+    final customerController = CustomerController(repository: repo);
+    await customerController.loadCustomers();
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: MediaQuery(
+          data: const MediaQueryData(
+            size: Size(320, 568),
+            viewInsets: EdgeInsets.only(bottom: 220),
+          ),
+          child: Scaffold(
+            body: DealFormModal(
+              customerController: customerController,
+              onSave: (_) {},
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(tester.takeException(), isNull);
+    expect(find.text('Nova Oportunidade'), findsOneWidget);
+  });
 }

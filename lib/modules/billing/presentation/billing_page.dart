@@ -393,80 +393,89 @@ class _InvoiceFormDialogState extends State<_InvoiceFormDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
+      insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
       title: const Text('Nova Fatura'),
-      content: SingleChildScrollView(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            AnimatedBuilder(
-              animation: widget.customerController,
-              builder: (context, _) {
-                final customers = widget.customerController.customers;
-                if (customers.isEmpty) {
-                  return const Text(
-                    'Nenhum cliente cadastrado. Cadastre um cliente primeiro na aba Clientes.',
-                    style: TextStyle(color: AppColors.danger, fontSize: 12),
-                  );
-                }
-
-                final validSelectedId = customers.any((c) => c.id == _selectedCustomerId)
-                    ? _selectedCustomerId
-                    : null;
-
-                return DropdownButtonFormField<String>(
-                  key: ValueKey(validSelectedId),
-                  initialValue: validSelectedId,
-                  isExpanded: true,
-                  decoration: const InputDecoration(labelText: 'Cliente *'),
-                  items: customers.map((c) {
-                    return DropdownMenuItem<String>(
-                      value: c.id,
-                      child: Text(
-                        c.name,
-                        overflow: TextOverflow.ellipsis,
-                      ),
+      content: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 480),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              AnimatedBuilder(
+                animation: widget.customerController,
+                builder: (context, _) {
+                  final customers = widget.customerController.customers;
+                  if (customers.isEmpty) {
+                    return const Text(
+                      'Nenhum cliente cadastrado. Cadastre um cliente primeiro na aba Clientes.',
+                      style: TextStyle(color: AppColors.danger, fontSize: 12),
                     );
-                  }).toList(),
-                  onChanged: (val) {
-                    setState(() {
-                      _selectedCustomerId = val;
-                    });
-                  },
-                );
-              },
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: _amountController,
-              decoration: const InputDecoration(labelText: 'Valor (R\$) *'),
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
-            ),
-            const SizedBox(height: 16),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text('Vencimento: ${formatDate(_selectedDueDate)}'),
-                TextButton.icon(
-                  onPressed: () async {
-                    final picked = await showDatePicker(
-                      context: context,
-                      initialDate: _selectedDueDate,
-                      firstDate: DateTime(2020),
-                      lastDate: DateTime(2100),
-                    );
-                    if (picked != null && mounted) {
+                  }
+
+                  final validSelectedId = customers.any((c) => c.id == _selectedCustomerId)
+                      ? _selectedCustomerId
+                      : null;
+
+                  return DropdownButtonFormField<String>(
+                    key: ValueKey(validSelectedId),
+                    initialValue: validSelectedId,
+                    isExpanded: true,
+                    decoration: const InputDecoration(labelText: 'Cliente *'),
+                    items: customers.map((c) {
+                      return DropdownMenuItem<String>(
+                        value: c.id,
+                        child: Text(
+                          c.name,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      );
+                    }).toList(),
+                    onChanged: (val) {
                       setState(() {
-                        _selectedDueDate = picked;
+                        _selectedCustomerId = val;
                       });
-                    }
-                  },
-                  icon: const Icon(Icons.calendar_today, size: 16),
-                  label: const Text('Alterar'),
-                ),
-              ],
-            ),
-          ],
+                    },
+                  );
+                },
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: _amountController,
+                decoration: const InputDecoration(labelText: 'Valor (R\$) *'),
+                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              ),
+              const SizedBox(height: 16),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Flexible(
+                    child: Text(
+                      'Vencimento: ${formatDate(_selectedDueDate)}',
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  TextButton.icon(
+                    onPressed: () async {
+                      final picked = await showDatePicker(
+                        context: context,
+                        initialDate: _selectedDueDate,
+                        firstDate: DateTime(2020),
+                        lastDate: DateTime(2100),
+                      );
+                      if (picked != null && mounted) {
+                        setState(() {
+                          _selectedDueDate = picked;
+                        });
+                      }
+                    },
+                    icon: const Icon(Icons.calendar_today, size: 16),
+                    label: const Text('Alterar'),
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
       actions: [

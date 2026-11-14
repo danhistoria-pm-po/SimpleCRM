@@ -36,34 +36,43 @@ class _CustomerFormModalState extends State<CustomerFormModal> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
+      insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
       title: const Text('Novo Cliente'),
-      content: SingleChildScrollView(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: _nameController,
-              decoration: const InputDecoration(labelText: 'Nome *'),
-            ),
-            TextField(
-              controller: _phoneController,
-              decoration: const InputDecoration(labelText: 'Telefone / WhatsApp'),
-              keyboardType: TextInputType.phone,
-            ),
-            TextField(
-              controller: _emailController,
-              decoration: const InputDecoration(labelText: 'E-mail'),
-              keyboardType: TextInputType.emailAddress,
-            ),
-            TextField(
-              controller: _addressController,
-              decoration: const InputDecoration(labelText: 'Endereço'),
-            ),
-            TextField(
-              controller: _notesController,
-              decoration: const InputDecoration(labelText: 'Observações'),
-            ),
-          ],
+      content: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 480),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              TextField(
+                controller: _nameController,
+                decoration: const InputDecoration(labelText: 'Nome *'),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: _phoneController,
+                decoration: const InputDecoration(labelText: 'Telefone / WhatsApp'),
+                keyboardType: TextInputType.phone,
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: _emailController,
+                decoration: const InputDecoration(labelText: 'E-mail'),
+                keyboardType: TextInputType.emailAddress,
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: _addressController,
+                decoration: const InputDecoration(labelText: 'Endereço'),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: _notesController,
+                decoration: const InputDecoration(labelText: 'Observações'),
+              ),
+            ],
+          ),
         ),
       ),
       actions: [
