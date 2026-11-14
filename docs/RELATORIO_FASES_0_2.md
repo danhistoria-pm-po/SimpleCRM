@@ -103,6 +103,17 @@ Compiling lib\main.dart for the Web...                            183,5s
 √ Built build\web
 ```
 
+### 2.4 Validação da Migration e Isolamento em Produção (`2026-11-13`)
+- **Correção de registro**: O registro anterior de `2026-11-12 20:45:18 -03:00` estava incorreto (nessa data a migration ainda não havia sido aplicada).
+- **Aplicação real da migration (`20261112202500_fase1_integridade.sql`)**: Aplicada manualmente em produção em `2026-11-13`, por volta das `21:44 -03:00`.
+- **Verificado via consultas no SQL Editor em `2026-11-13`**:
+  - 5 policies `*_owner_policy` para `{authenticated}`.
+  - `user_id NOT NULL` nas 5 tabelas.
+  - Função `delete_customer_safe` criada.
+  - 3 FKs `ON DELETE RESTRICT` e `customer_id` do tipo `uuid` em `deals`, `follow_ups` e `invoices`.
+- **Teste de 2 usuários validado em `2026-11-13`**:
+  - Confirmado que o Usuário B não vê dados do Usuário A e vice-versa nas 5 abas.
+
 ---
 
 ## 3. Riscos Conhecidos e Pendências (Pós-Fase 2)

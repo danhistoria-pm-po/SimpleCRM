@@ -104,10 +104,13 @@ O script de diagnóstico foi criado em [`supabase/tests/rls_check.sql`](../supab
   - `invoices` e `cash_flow`: **sem nenhuma policy** (bloqueio total com RLS ativo).
   - `follow_ups`: policy `"Enable all access for follow_ups"` com `USING (true)` e `WITH CHECK (true)` (**brecha crítica de segurança**, deve ser removida).
 
-### 3.1 Aplicação e Validação da Migration da Fase 1
-- **Data/Hora de aplicação e validação**: `2026-11-12 20:45:18 -03:00`
-- **Status**: Migration `supabase/migrations/20261112202500_fase1_integridade.sql` aplicada manualmente e validada com sucesso:
-  - Policies padronizadas (`*_owner_policy` `FOR ALL TO authenticated USING ((select auth.uid()) = user_id) WITH CHECK ((select auth.uid()) = user_id)`) ativas nas 5 tabelas e policy aberta de `follow_ups` removida.
-  - `user_id NOT NULL DEFAULT auth.uid()` confirmado nas 5 tabelas.
-  - `invoices.customer_id` convertido de `text` para `uuid` com FK `ON DELETE RESTRICT` (`invoices`, `follow_ups` e `deals`).
-  - Função RPC `public.delete_customer_safe(p_customer_id uuid)` criada e validada.
+### 3.1 Aplicação e Validação da Migration da Fase 1 (Pós-Baseline)
+- **Correção de histórico**: Em `2026-11-12` (inclusive às `20:45:18 -03:00`), apenas o diagnóstico inicial de baseline havia sido levantado; a migration **ainda não havia sido aplicada** nessa data.
+- **Data/Hora real de aplicação em produção**: `2026-11-13`, por volta das `21:44 -03:00` (aplicada manualmente).
+- **Validação no SQL Editor (`2026-11-13`)**:
+  - 5 policies `*_owner_policy` ativas para `{authenticated}` (e policy aberta de `follow_ups` removida).
+  - `user_id NOT NULL` confirmado nas 5 tabelas (`customers`, `deals`, `invoices`, `cash_flow`, `follow_ups`).
+  - Função `public.delete_customer_safe` criada.
+  - 3 Foreign Keys `ON DELETE RESTRICT` e `customer_id` do tipo `uuid` confirmados em `deals`, `follow_ups` e `invoices`.
+- **Validação de 2 usuários (`2026-11-13`)**:
+  - Teste de isolamento entre 2 usuários validado na prática: o Usuário B não vê dados do Usuário A e vice-versa nas 5 abas.
