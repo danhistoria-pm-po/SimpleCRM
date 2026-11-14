@@ -1,5 +1,6 @@
 // lib/modules/pipeline/components/deal_card.dart
 import 'package:flutter/material.dart';
+import '../../../core/theme/app_colors.dart';
 import '../models/deal_entity.dart';
 
 class DealCard extends StatelessWidget {
@@ -34,7 +35,7 @@ class DealCard extends StatelessWidget {
             const SizedBox(height: 2),
             Text(
               deal.customerName,
-              style: TextStyle(color: Colors.grey[700], fontSize: 12),
+              style: const TextStyle(color: AppColors.textSecondary, fontSize: 12),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
@@ -46,7 +47,7 @@ class DealCard extends StatelessWidget {
                   'R\$ ${deal.value.toStringAsFixed(2)}',
                   style: const TextStyle(
                     fontWeight: FontWeight.w600,
-                    color: Colors.green,
+                    color: AppColors.success,
                     fontSize: 12,
                   ),
                 ),
@@ -90,14 +91,14 @@ class DealCard extends StatelessWidget {
                         value: 'delete',
                         child: Row(
                           children: [
-                            Icon(Icons.delete, size: 16, color: Colors.redAccent),
+                            Icon(Icons.delete, size: 16, color: AppColors.danger),
                             SizedBox(width: 8),
                             Flexible(
                               child: Text(
                                 'Excluir Oportunidade',
                                 style: TextStyle(
                                   fontSize: 12,
-                                  color: Colors.redAccent,
+                                  color: AppColors.danger,
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),

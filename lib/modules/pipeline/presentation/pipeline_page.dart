@@ -1,5 +1,6 @@
 // lib/modules/pipeline/presentation/pipeline_page.dart
 import 'package:flutter/material.dart';
+import '../../../core/theme/app_colors.dart';
 import '../controllers/pipeline_controller.dart';
 import '../models/deal_entity.dart';
 import '../components/pipeline_column.dart';
@@ -49,7 +50,7 @@ class _PipelinePageState extends State<PipelinePage> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Erro ao carregar oportunidades: ${_controller.errorMessage}'),
-          backgroundColor: Colors.red,
+          backgroundColor: AppColors.danger,
         ),
       );
     }
@@ -63,7 +64,7 @@ class _PipelinePageState extends State<PipelinePage> {
           content: Text(
             'Erro ao criar oportunidade: ${_controller.errorMessage ?? "Erro desconhecido"}',
           ),
-          backgroundColor: Colors.red,
+          backgroundColor: AppColors.danger,
         ),
       );
     }
@@ -77,7 +78,7 @@ class _PipelinePageState extends State<PipelinePage> {
           content: Text(
             'Erro ao mover oportunidade: ${_controller.errorMessage ?? "Erro desconhecido"}',
           ),
-          backgroundColor: Colors.red,
+          backgroundColor: AppColors.danger,
         ),
       );
     }
@@ -98,8 +99,8 @@ class _PipelinePageState extends State<PipelinePage> {
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.redAccent,
-              foregroundColor: Colors.white,
+              backgroundColor: AppColors.danger,
+              foregroundColor: AppColors.surface,
             ),
             onPressed: () => Navigator.pop(dialogContext, true),
             child: const Text('Excluir'),
@@ -120,7 +121,7 @@ class _PipelinePageState extends State<PipelinePage> {
           content: Text(
             'Erro ao excluir oportunidade: ${_controller.errorMessage ?? "Erro desconhecido"}',
           ),
-          backgroundColor: Colors.red,
+          backgroundColor: AppColors.danger,
         ),
       );
     }
@@ -145,8 +146,6 @@ class _PipelinePageState extends State<PipelinePage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('SimpleCRM - Funil de Vendas'),
-        backgroundColor: Colors.indigo,
-        foregroundColor: Colors.white,
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
@@ -174,7 +173,7 @@ class _PipelinePageState extends State<PipelinePage> {
                         Text(
                           _controller.errorMessage!,
                           textAlign: TextAlign.center,
-                          style: const TextStyle(color: Colors.red, fontSize: 16),
+                          style: const TextStyle(color: AppColors.danger, fontSize: 16),
                         ),
                         const SizedBox(height: 12),
                         ElevatedButton.icon(
@@ -200,7 +199,7 @@ class _PipelinePageState extends State<PipelinePage> {
                           deals: _controller.deals
                               .where((d) => d.stage == DealStage.potential)
                               .toList(),
-                          headerColor: Colors.blueAccent,
+                          headerColor: AppColors.stagePotential,
                           onStageChanged: _handleUpdateStage,
                           onDelete: _handleDeleteDeal,
                         ),
@@ -210,7 +209,7 @@ class _PipelinePageState extends State<PipelinePage> {
                           deals: _controller.deals
                               .where((d) => d.stage == DealStage.inNegotiation)
                               .toList(),
-                          headerColor: Colors.orangeAccent,
+                          headerColor: AppColors.stageNegotiation,
                           onStageChanged: _handleUpdateStage,
                           onDelete: _handleDeleteDeal,
                         ),
@@ -220,7 +219,7 @@ class _PipelinePageState extends State<PipelinePage> {
                           deals: _controller.deals
                               .where((d) => d.stage == DealStage.proposalSent)
                               .toList(),
-                          headerColor: Colors.purpleAccent,
+                          headerColor: AppColors.stageProposal,
                           onStageChanged: _handleUpdateStage,
                           onDelete: _handleDeleteDeal,
                         ),
@@ -230,7 +229,7 @@ class _PipelinePageState extends State<PipelinePage> {
                           deals: _controller.deals
                               .where((d) => d.stage == DealStage.activeClient)
                               .toList(),
-                          headerColor: Colors.green,
+                          headerColor: AppColors.stageActive,
                           onStageChanged: _handleUpdateStage,
                           onDelete: _handleDeleteDeal,
                         ),
@@ -240,7 +239,7 @@ class _PipelinePageState extends State<PipelinePage> {
                           deals: _controller.deals
                               .where((d) => d.stage == DealStage.lost)
                               .toList(),
-                          headerColor: Colors.redAccent,
+                          headerColor: AppColors.stageLost,
                           onStageChanged: _handleUpdateStage,
                           onDelete: _handleDeleteDeal,
                         ),
@@ -250,8 +249,6 @@ class _PipelinePageState extends State<PipelinePage> {
                 ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _showAddDealDialog,
-        backgroundColor: Colors.indigo,
-        foregroundColor: Colors.white,
         icon: const Icon(Icons.add),
         label: const Text('Nova Oportunidade'),
       ),

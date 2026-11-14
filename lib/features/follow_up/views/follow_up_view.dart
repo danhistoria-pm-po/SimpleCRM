@@ -1,5 +1,6 @@
 // lib/features/follow_up/views/follow_up_view.dart
 import 'package:flutter/material.dart';
+import '../../../core/theme/app_colors.dart';
 import '../controllers/follow_up_controller.dart';
 import '../models/follow_up_model.dart';
 import '../../../modules/customers/domain/entities/customer_entity.dart';
@@ -45,8 +46,8 @@ class _FollowUpViewState extends State<FollowUpView> {
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.redAccent,
-              foregroundColor: Colors.white,
+              backgroundColor: AppColors.danger,
+              foregroundColor: AppColors.surface,
             ),
             onPressed: () => Navigator.pop(dialogContext, true),
             child: const Text('Excluir'),
@@ -79,7 +80,7 @@ class _FollowUpViewState extends State<FollowUpView> {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
                   content: Text(_controller.errorMessage!),
-                  backgroundColor: Colors.red,
+                  backgroundColor: AppColors.danger,
                 ),
               );
             }
@@ -94,8 +95,6 @@ class _FollowUpViewState extends State<FollowUpView> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Pós-Venda & Follow-up'),
-        backgroundColor: Colors.indigo,
-        foregroundColor: Colors.white,
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
@@ -106,7 +105,7 @@ class _FollowUpViewState extends State<FollowUpView> {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
                     content: Text(_controller.errorMessage!),
-                    backgroundColor: Colors.red,
+                    backgroundColor: AppColors.danger,
                   ),
                 );
               }
@@ -137,7 +136,7 @@ class _FollowUpViewState extends State<FollowUpView> {
                   children: [
                     Text(
                       _controller.errorMessage!,
-                      style: const TextStyle(color: Colors.red, fontSize: 16),
+                      style: const TextStyle(color: AppColors.danger, fontSize: 16),
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 12),
@@ -157,7 +156,7 @@ class _FollowUpViewState extends State<FollowUpView> {
               child: Text(
                 'Nenhum follow-up registado.\nClique no botão abaixo para agendar.',
                 textAlign: TextAlign.center,
-                style: TextStyle(color: Colors.grey, fontSize: 16),
+                style: TextStyle(color: AppColors.textSecondary, fontSize: 16),
               ),
             );
           }
@@ -198,9 +197,9 @@ class _FollowUpViewState extends State<FollowUpView> {
                                     padding: const EdgeInsets.only(top: 2.0),
                                     child: Text(
                                       'Cliente: $customerName',
-                                      style: TextStyle(
+                                      style: const TextStyle(
                                         fontSize: 12,
-                                        color: Colors.indigo.shade700,
+                                        color: AppColors.primary,
                                         fontWeight: FontWeight.w500,
                                       ),
                                     ),
@@ -212,7 +211,7 @@ class _FollowUpViewState extends State<FollowUpView> {
                           IconButton(
                             icon: const Icon(
                               Icons.delete_outline,
-                              color: Colors.redAccent,
+                              color: AppColors.danger,
                               size: 20,
                             ),
                             tooltip: 'Excluir Follow-up',
@@ -227,7 +226,7 @@ class _FollowUpViewState extends State<FollowUpView> {
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   SnackBar(
                                     content: Text(_controller.errorMessage!),
-                                    backgroundColor: Colors.red,
+                                    backgroundColor: AppColors.danger,
                                   ),
                                 );
                               }
@@ -240,7 +239,7 @@ class _FollowUpViewState extends State<FollowUpView> {
                         const SizedBox(height: 8),
                         Text(
                           item.description!,
-                          style: TextStyle(color: Colors.grey[700]),
+                          style: const TextStyle(color: AppColors.textSecondary),
                         ),
                       ],
                       const Divider(height: 24),
@@ -261,7 +260,7 @@ class _FollowUpViewState extends State<FollowUpView> {
                                       ScaffoldMessenger.of(context).showSnackBar(
                                         SnackBar(
                                           content: Text(_controller.errorMessage!),
-                                          backgroundColor: Colors.red,
+                                          backgroundColor: AppColors.danger,
                                         ),
                                       );
                                     }
@@ -276,9 +275,9 @@ class _FollowUpViewState extends State<FollowUpView> {
                           ),
                           Text(
                             'Agendado: ${_formatDate(item.scheduledDate)}',
-                            style: TextStyle(
+                            style: const TextStyle(
                               fontSize: 12,
-                              color: Colors.grey[600],
+                              color: AppColors.textSecondary,
                             ),
                           ),
                         ],
@@ -293,8 +292,6 @@ class _FollowUpViewState extends State<FollowUpView> {
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _showAddFollowUpModal,
-        backgroundColor: Colors.indigo,
-        foregroundColor: Colors.white,
         icon: const Icon(Icons.add_task),
         label: const Text('Novo Follow-up'),
       ),
@@ -305,13 +302,13 @@ class _FollowUpViewState extends State<FollowUpView> {
     Color color;
     switch (status) {
       case 'concluido':
-        color = Colors.green;
+        color = AppColors.success;
         break;
       case 'cancelado':
-        color = Colors.red;
+        color = AppColors.danger;
         break;
       default:
-        color = Colors.orange;
+        color = AppColors.warning;
     }
 
     return Container(
@@ -389,9 +386,9 @@ class _FollowUpFormDialogState extends State<_FollowUpFormDialog> {
               builder: (context, _) {
                 final customers = widget.customerController.customers;
                 if (customers.isEmpty) {
-                  return Text(
+                  return const Text(
                     'Nenhum cliente cadastrado. Cadastre um cliente primeiro na aba Clientes.',
-                    style: TextStyle(color: Colors.red.shade700, fontSize: 12),
+                    style: TextStyle(color: AppColors.danger, fontSize: 12),
                   );
                 }
 
@@ -476,7 +473,7 @@ class _FollowUpFormDialogState extends State<_FollowUpFormDialog> {
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
                   content: Text('Selecione o cliente e informe o título do follow-up.'),
-                  backgroundColor: Colors.red,
+                  backgroundColor: AppColors.danger,
                 ),
               );
               return;

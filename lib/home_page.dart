@@ -1,5 +1,6 @@
 // lib/home_page.dart
 import 'package:flutter/material.dart';
+import 'core/theme/app_colors.dart';
 import 'modules/pipeline/presentation/pipeline_page.dart';
 import 'modules/customers/presentation/customer_list_page.dart';
 import 'modules/billing/presentation/billing_page.dart';
@@ -41,8 +42,8 @@ class _HomePageState extends State<HomePage> {
           });
         },
         type: BottomNavigationBarType.fixed,
-        selectedItemColor: Colors.indigo,
-        unselectedItemColor: Colors.grey,
+        selectedItemColor: AppColors.primary,
+        unselectedItemColor: AppColors.textSecondary,
         items: const [
           BottomNavigationBarItem(
             icon: Icon(Icons.bar_chart),

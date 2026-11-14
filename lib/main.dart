@@ -2,6 +2,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'core/theme/app_theme.dart';
 import 'home_page.dart';
 import 'modules/auth/pages/login_page.dart';
 import 'modules/customers/presentation/customer_controller.dart';
@@ -25,14 +26,7 @@ class SimpleCRMApp extends StatelessWidget {
     return MaterialApp(
       title: 'SimpleCRM — Produtividade PME',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        useMaterial3: true,
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFF1E3A8A),
-          primary: const Color(0xFF1E3A8A),
-        ),
-        scaffoldBackgroundColor: const Color(0xFFF8FAFC),
-      ),
+      theme: AppTheme.lightTheme,
       home: const AuthCheckPage(),
     );
   }

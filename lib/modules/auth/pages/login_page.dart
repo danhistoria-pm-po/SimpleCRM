@@ -1,5 +1,6 @@
 // lib/modules/auth/pages/login_page.dart
 import 'package:flutter/material.dart';
+import '../../../core/theme/app_colors.dart';
 import '../controllers/auth_controller.dart';
 import 'register_page.dart';
 
@@ -42,7 +43,7 @@ class _LoginPageState extends State<LoginPage> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(_authController.errorMessage ?? 'Erro desconhecido'),
-            backgroundColor: Colors.red,
+            backgroundColor: AppColors.danger,
           ),
         );
       }
@@ -54,7 +55,7 @@ class _LoginPageState extends State<LoginPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[50],
+      backgroundColor: AppColors.background,
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
@@ -70,7 +71,7 @@ class _LoginPageState extends State<LoginPage> {
                     const Icon(
                       Icons.hub_rounded,
                       size: 64,
-                      color: Colors.blueAccent,
+                      color: AppColors.primary,
                     ),
                     const SizedBox(height: 16),
                     const Text(
@@ -80,16 +81,16 @@ class _LoginPageState extends State<LoginPage> {
                         fontSize: 28,
                         fontWeight: FontWeight.bold,
                         letterSpacing: -0.5,
-                        color: Colors.black87,
+                        color: AppColors.textPrimary,
                       ),
                     ),
                     const SizedBox(height: 8),
-                    Text(
+                    const Text(
                       'Gestão comercial simples e direta ao ponto',
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         fontSize: 14,
-                        color: Colors.grey[600],
+                        color: AppColors.textSecondary,
                       ),
                     ),
                     const SizedBox(height: 32),
@@ -102,14 +103,14 @@ class _LoginPageState extends State<LoginPage> {
                         labelText: 'E-mail',
                         prefixIcon: const Icon(Icons.email_outlined),
                         filled: true,
-                        fillColor: Colors.white,
+                        fillColor: AppColors.surface,
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide(color: Colors.grey[300]!),
+                          borderSide: const BorderSide(color: AppColors.border),
                         ),
                         enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide(color: Colors.grey[300]!),
+                          borderSide: const BorderSide(color: AppColors.border),
                         ),
                       ),
                       validator: (value) {
@@ -129,7 +130,7 @@ class _LoginPageState extends State<LoginPage> {
                         labelText: 'Palavra-passe',
                         prefixIcon: const Icon(Icons.lock_outline),
                         filled: true,
-                        fillColor: Colors.white,
+                        fillColor: AppColors.surface,
                         suffixIcon: IconButton(
                           icon: Icon(
                             _obscurePassword ? Icons.visibility_off : Icons.visibility,
@@ -142,11 +143,11 @@ class _LoginPageState extends State<LoginPage> {
                         ),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide(color: Colors.grey[300]!),
+                          borderSide: const BorderSide(color: AppColors.border),
                         ),
                         enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide(color: Colors.grey[300]!),
+                          borderSide: const BorderSide(color: AppColors.border),
                         ),
                       ),
                       validator: (value) {
@@ -169,8 +170,8 @@ class _LoginPageState extends State<LoginPage> {
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12),
                             ),
-                            backgroundColor: Colors.blueAccent,
-                            foregroundColor: Colors.white,
+                            backgroundColor: AppColors.primary,
+                            foregroundColor: AppColors.surface,
                             elevation: 0,
                           ),
                           child: _authController.isLoading
@@ -179,7 +180,7 @@ class _LoginPageState extends State<LoginPage> {
                                   width: 20,
                                   child: CircularProgressIndicator(
                                     strokeWidth: 2,
-                                    color: Colors.white,
+                                    color: AppColors.surface,
                                   ),
                                 )
                               : const Text(
@@ -195,9 +196,9 @@ class _LoginPageState extends State<LoginPage> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Text(
+                        const Text(
                           'Não tem uma conta?',
-                          style: TextStyle(color: Colors.grey[600]),
+                          style: TextStyle(color: AppColors.textSecondary),
                         ),
                         TextButton(
                           onPressed: () {

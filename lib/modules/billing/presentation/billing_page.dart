@@ -1,5 +1,6 @@
 // lib/modules/billing/presentation/billing_page.dart
 import 'package:flutter/material.dart';
+import '../../../core/theme/app_colors.dart';
 import '../controllers/billing_controller.dart';
 import '../models/invoice_entity.dart';
 import '../utils/nf_clipboard_helper.dart';
@@ -46,8 +47,8 @@ class _BillingPageState extends State<BillingPage> {
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.redAccent,
-              foregroundColor: Colors.white,
+              backgroundColor: AppColors.danger,
+              foregroundColor: AppColors.surface,
             ),
             onPressed: () => Navigator.pop(dialogContext, true),
             child: const Text('Excluir'),
@@ -85,7 +86,7 @@ class _BillingPageState extends State<BillingPage> {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
                   content: Text(_controller.errorMessage!),
-                  backgroundColor: Colors.red,
+                  backgroundColor: AppColors.danger,
                 ),
               );
             }
@@ -100,8 +101,6 @@ class _BillingPageState extends State<BillingPage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Gestão de Faturamento & Notas Fiscais'),
-        backgroundColor: Colors.indigo,
-        foregroundColor: Colors.white,
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
@@ -111,7 +110,7 @@ class _BillingPageState extends State<BillingPage> {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
                     content: Text(_controller.errorMessage!),
-                    backgroundColor: Colors.red,
+                    backgroundColor: AppColors.danger,
                   ),
                 );
               }
@@ -143,7 +142,7 @@ class _BillingPageState extends State<BillingPage> {
                   children: [
                     Text(
                       _controller.errorMessage!,
-                      style: const TextStyle(color: Colors.red, fontSize: 16),
+                      style: const TextStyle(color: AppColors.danger, fontSize: 16),
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 12),
@@ -163,12 +162,12 @@ class _BillingPageState extends State<BillingPage> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.receipt_long_outlined, size: 64, color: Colors.grey),
+                  Icon(Icons.receipt_long_outlined, size: 64, color: AppColors.textSecondary),
                   SizedBox(height: 16),
                   Text(
                     'Nenhuma fatura registada.\nClique no botão abaixo para emitir.',
                     textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 16, color: Colors.grey),
+                    style: TextStyle(fontSize: 16, color: AppColors.textSecondary),
                   ),
                 ],
               ),
@@ -235,7 +234,7 @@ class _BillingPageState extends State<BillingPage> {
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   SnackBar(
                                     content: Text(_controller.errorMessage!),
-                                    backgroundColor: Colors.red,
+                                    backgroundColor: AppColors.danger,
                                   ),
                                 );
                               }
@@ -258,7 +257,7 @@ class _BillingPageState extends State<BillingPage> {
                                 value: 'delete',
                                 child: Text(
                                   'Excluir Fatura',
-                                  style: TextStyle(color: Colors.redAccent),
+                                  style: TextStyle(color: AppColors.danger),
                                 ),
                               ),
                             ],
@@ -274,12 +273,12 @@ class _BillingPageState extends State<BillingPage> {
                             style: const TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.w600,
-                              color: Colors.indigo,
+                              color: AppColors.primary,
                             ),
                           ),
                           Text(
                             'Vencimento: ${_formatDate(invoice.dueDate)}',
-                            style: const TextStyle(color: Colors.grey),
+                            style: const TextStyle(color: AppColors.textSecondary),
                           ),
                         ],
                       ),
@@ -298,7 +297,7 @@ class _BillingPageState extends State<BillingPage> {
                                     content: Text(
                                       'Dados copiados para a área de transferência para emissão de NF!',
                                     ),
-                                    backgroundColor: Colors.green,
+                                    backgroundColor: AppColors.success,
                                   ),
                                 );
                               }
@@ -318,8 +317,6 @@ class _BillingPageState extends State<BillingPage> {
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _showAddInvoiceModal,
-        backgroundColor: Colors.indigo,
-        foregroundColor: Colors.white,
         icon: const Icon(Icons.post_add),
         label: const Text('Nova Fatura'),
       ),
@@ -332,15 +329,15 @@ class _BillingPageState extends State<BillingPage> {
 
     switch (status) {
       case InvoiceStatus.pending:
-        color = Colors.orange;
+        color = AppColors.warning;
         label = 'Pendente';
         break;
       case InvoiceStatus.paid:
-        color = Colors.green;
+        color = AppColors.success;
         label = 'Pago';
         break;
       case InvoiceStatus.cancelled:
-        color = Colors.red;
+        color = AppColors.danger;
         label = 'Cancelado';
         break;
     }
@@ -414,9 +411,9 @@ class _InvoiceFormDialogState extends State<_InvoiceFormDialog> {
               builder: (context, _) {
                 final customers = widget.customerController.customers;
                 if (customers.isEmpty) {
-                  return Text(
+                  return const Text(
                     'Nenhum cliente cadastrado. Cadastre um cliente primeiro na aba Clientes.',
-                    style: TextStyle(color: Colors.red.shade700, fontSize: 12),
+                    style: TextStyle(color: AppColors.danger, fontSize: 12),
                   );
                 }
 
@@ -496,7 +493,7 @@ class _InvoiceFormDialogState extends State<_InvoiceFormDialog> {
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
                   content: Text('Selecione um cliente e informe um valor válido.'),
-                  backgroundColor: Colors.red,
+                  backgroundColor: AppColors.danger,
                 ),
               );
               return;

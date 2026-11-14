@@ -1,5 +1,6 @@
 // lib/modules/pipeline/components/pipeline_column.dart
 import 'package:flutter/material.dart';
+import '../../../core/theme/app_colors.dart';
 import '../models/deal_entity.dart';
 import 'deal_card.dart';
 
@@ -9,7 +10,7 @@ class PipelineColumn extends StatelessWidget {
   final List<DealEntity> deals;
   final Color headerColor;
   final Function(String, DealStage) onStageChanged;
-  final Function(String) onDelete; // Novo callback para exclusão
+  final Function(String) onDelete;
 
   const PipelineColumn({
     super.key,
@@ -24,21 +25,30 @@ class PipelineColumn extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 240, // Largura reduzida para acomodar melhor na tela
+      width: 240,
       margin: const EdgeInsets.symmetric(horizontal: 6),
+      clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
-        color: Colors.grey[100],
+        color: AppColors.background,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey[300]!),
+        border: Border.all(color: AppColors.border),
       ),
       child: Column(
         children: [
-          // Cabeçalho da Coluna
+          // Faixa superior de 4 px na cor da etapa
+          Container(
+            height: 4,
+            width: double.infinity,
+            color: headerColor,
+          ),
+          // Cabeçalho neutro da coluna (fundo surface, texto textPrimary)
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-            decoration: BoxDecoration(
-              color: headerColor,
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
+            decoration: const BoxDecoration(
+              color: AppColors.surface,
+              border: Border(
+                bottom: BorderSide(color: AppColors.border),
+              ),
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -47,19 +57,27 @@ class PipelineColumn extends StatelessWidget {
                   child: Text(
                     title,
                     style: const TextStyle(
-                      color: Colors.white,
+                      color: AppColors.textPrimary,
                       fontWeight: FontWeight.bold,
                       fontSize: 13,
                     ),
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
-                CircleAvatar(
-                  radius: 10,
-                  backgroundColor: Colors.white,
+                const SizedBox(width: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: AppColors.primaryLight,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                   child: Text(
                     '${deals.length}',
-                    style: TextStyle(fontSize: 11, color: headerColor, fontWeight: FontWeight.bold),
+                    style: const TextStyle(
+                      fontSize: 11,
+                      color: AppColors.primaryDark,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
               ],

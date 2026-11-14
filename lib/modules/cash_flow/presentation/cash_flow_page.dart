@@ -1,5 +1,6 @@
 // lib/modules/cash_flow/presentation/cash_flow_page.dart
 import 'package:flutter/material.dart';
+import '../../../core/theme/app_colors.dart';
 import '../controllers/cash_flow_controller.dart';
 import '../models/cash_flow_entry_entity.dart';
 import '../../auth/controllers/auth_controller.dart';
@@ -41,8 +42,8 @@ class _CashFlowPageState extends State<CashFlowPage> {
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.redAccent,
-              foregroundColor: Colors.white,
+              backgroundColor: AppColors.danger,
+              foregroundColor: AppColors.surface,
             ),
             onPressed: () => Navigator.pop(dialogContext, true),
             child: const Text('Excluir'),
@@ -65,7 +66,7 @@ class _CashFlowPageState extends State<CashFlowPage> {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
                   content: Text(_controller.errorMessage!),
-                  backgroundColor: Colors.red,
+                  backgroundColor: AppColors.danger,
                 ),
               );
             }
@@ -80,8 +81,6 @@ class _CashFlowPageState extends State<CashFlowPage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Fluxo de Caixa Simples'),
-        backgroundColor: Colors.indigo,
-        foregroundColor: Colors.white,
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
@@ -91,7 +90,7 @@ class _CashFlowPageState extends State<CashFlowPage> {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
                     content: Text(_controller.errorMessage!),
-                    backgroundColor: Colors.red,
+                    backgroundColor: AppColors.danger,
                   ),
                 );
               }
@@ -123,7 +122,7 @@ class _CashFlowPageState extends State<CashFlowPage> {
                   children: [
                     Text(
                       _controller.errorMessage!,
-                      style: const TextStyle(color: Colors.red, fontSize: 16),
+                      style: const TextStyle(color: AppColors.danger, fontSize: 16),
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 12),
@@ -143,13 +142,13 @@ class _CashFlowPageState extends State<CashFlowPage> {
               // Dashboard com Resumo Financeiro
               Container(
                 padding: const EdgeInsets.all(16),
-                color: Colors.indigo.shade50,
+                color: AppColors.primaryLight,
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
                   children: [
-                    _buildSummaryCard('Entradas', _controller.totalIncome, Colors.green),
-                    _buildSummaryCard('Saídas', _controller.totalExpense, Colors.red),
-                    _buildSummaryCard('Saldo', _controller.netBalance, Colors.indigo),
+                    _buildSummaryCard('Entradas', _controller.totalIncome, AppColors.success),
+                    _buildSummaryCard('Saídas', _controller.totalExpense, AppColors.danger),
+                    _buildSummaryCard('Saldo', _controller.netBalance, AppColors.primaryDark),
                   ],
                 ),
               ),
@@ -160,7 +159,7 @@ class _CashFlowPageState extends State<CashFlowPage> {
                         child: Text(
                           'Nenhum registo financeiro encontrado.\nClique no botão abaixo para lançar.',
                           textAlign: TextAlign.center,
-                          style: TextStyle(fontSize: 16, color: Colors.grey),
+                          style: TextStyle(fontSize: 16, color: AppColors.textSecondary),
                         ),
                       )
                     : ListView.builder(
@@ -169,17 +168,16 @@ class _CashFlowPageState extends State<CashFlowPage> {
                         itemBuilder: (context, index) {
                           final entry = _controller.entries[index];
                           final isIncome = entry.type == CashFlowType.income;
+                          final entryColor = isIncome ? AppColors.success : AppColors.danger;
                           return Card(
                             elevation: 2,
                             margin: const EdgeInsets.only(bottom: 10),
                             child: ListTile(
                               leading: CircleAvatar(
-                                backgroundColor: isIncome
-                                    ? Colors.green.shade100
-                                    : Colors.red.shade100,
+                                backgroundColor: entryColor.withValues(alpha: 0.12),
                                 child: Icon(
                                   isIncome ? Icons.arrow_downward : Icons.arrow_upward,
-                                  color: isIncome ? Colors.green : Colors.red,
+                                  color: entryColor,
                                 ),
                               ),
                               title: Text(
@@ -193,7 +191,7 @@ class _CashFlowPageState extends State<CashFlowPage> {
                                   Text(
                                     '${isIncome ? '+' : '-'} R\$ ${entry.amount.toStringAsFixed(2)}',
                                     style: TextStyle(
-                                      color: isIncome ? Colors.green : Colors.red,
+                                      color: entryColor,
                                       fontWeight: FontWeight.bold,
                                       fontSize: 16,
                                     ),
@@ -201,7 +199,7 @@ class _CashFlowPageState extends State<CashFlowPage> {
                                   IconButton(
                                     icon: const Icon(
                                       Icons.delete_outline,
-                                      color: Colors.redAccent,
+                                      color: AppColors.danger,
                                       size: 20,
                                     ),
                                     onPressed: () async {
@@ -216,7 +214,7 @@ class _CashFlowPageState extends State<CashFlowPage> {
                                         ScaffoldMessenger.of(context).showSnackBar(
                                           SnackBar(
                                             content: Text(_controller.errorMessage!),
-                                            backgroundColor: Colors.red,
+                                            backgroundColor: AppColors.danger,
                                           ),
                                         );
                                       }
@@ -235,8 +233,6 @@ class _CashFlowPageState extends State<CashFlowPage> {
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _showAddEntryModal,
-        backgroundColor: Colors.indigo,
-        foregroundColor: Colors.white,
         icon: const Icon(Icons.add),
         label: const Text('Novo Lançamento'),
       ),
@@ -248,7 +244,10 @@ class _CashFlowPageState extends State<CashFlowPage> {
       children: [
         Text(
           title,
-          style: TextStyle(color: Colors.grey.shade700, fontWeight: FontWeight.w500),
+          style: const TextStyle(
+            color: AppColors.textSecondary,
+            fontWeight: FontWeight.w500,
+          ),
         ),
         const SizedBox(height: 4),
         Text(
@@ -345,7 +344,7 @@ class _CashFlowEntryFormDialogState extends State<_CashFlowEntryFormDialog> {
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
                   content: Text('Informe uma descrição e um valor válido.'),
-                  backgroundColor: Colors.red,
+                  backgroundColor: AppColors.danger,
                 ),
               );
               return;

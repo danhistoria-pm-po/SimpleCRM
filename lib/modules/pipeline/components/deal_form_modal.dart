@@ -1,5 +1,6 @@
 // lib/modules/pipeline/components/deal_form_modal.dart
 import 'package:flutter/material.dart';
+import '../../../core/theme/app_colors.dart';
 import '../../customers/domain/entities/customer_entity.dart';
 import '../../customers/presentation/customer_controller.dart';
 import '../models/deal_entity.dart';
@@ -44,13 +45,13 @@ class _DealFormModalState extends State<DealFormModal> {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: Colors.black54,
+      color: AppColors.overlay,
       child: Center(
         child: Container(
           width: 400,
           padding: const EdgeInsets.all(24.0),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: AppColors.surface,
             borderRadius: BorderRadius.circular(12.0),
           ),
           child: Form(
@@ -80,11 +81,11 @@ class _DealFormModalState extends State<DealFormModal> {
                     final customers = widget.customerController.customers;
 
                     if (customers.isEmpty) {
-                      return Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 8.0),
+                      return const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 8.0),
                         child: Text(
                           'Nenhum cliente cadastrado. Cadastre um cliente primeiro na aba Clientes.',
-                          style: TextStyle(color: Colors.red.shade700, fontSize: 12),
+                          style: TextStyle(color: AppColors.danger, fontSize: 12),
                         ),
                       );
                     }

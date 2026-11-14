@@ -1,5 +1,6 @@
 // lib/modules/customers/presentation/customer_list_page.dart
 import 'package:flutter/material.dart';
+import '../../../core/theme/app_colors.dart';
 import 'customer_controller.dart';
 import 'customer_form_modal.dart';
 import '../../auth/controllers/auth_controller.dart';
@@ -42,8 +43,8 @@ class _CustomerListPageState extends State<CustomerListPage> {
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.redAccent,
-              foregroundColor: Colors.white,
+              backgroundColor: AppColors.danger,
+              foregroundColor: AppColors.surface,
             ),
             onPressed: () => Navigator.pop(dialogContext, true),
             child: const Text('Excluir'),
@@ -73,7 +74,7 @@ class _CustomerListPageState extends State<CustomerListPage> {
                   content: Text(
                     'Erro ao salvar cliente: ${_controller.errorMessage ?? "Erro desconhecido"}',
                   ),
-                  backgroundColor: Colors.red,
+                  backgroundColor: AppColors.danger,
                   duration: const Duration(seconds: 5),
                 ),
               );
@@ -89,8 +90,6 @@ class _CustomerListPageState extends State<CustomerListPage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('SimpleCRM - Clientes'),
-        backgroundColor: Colors.indigo,
-        foregroundColor: Colors.white,
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
@@ -101,7 +100,7 @@ class _CustomerListPageState extends State<CustomerListPage> {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
                     content: Text(_controller.errorMessage!),
-                    backgroundColor: Colors.red,
+                    backgroundColor: AppColors.danger,
                   ),
                 );
               }
@@ -135,7 +134,7 @@ class _CustomerListPageState extends State<CustomerListPage> {
                     Text(
                       _controller.errorMessage!,
                       textAlign: TextAlign.center,
-                      style: const TextStyle(color: Colors.red, fontSize: 16),
+                      style: const TextStyle(color: AppColors.danger, fontSize: 16),
                     ),
                     const SizedBox(height: 12),
                     ElevatedButton.icon(
@@ -154,7 +153,7 @@ class _CustomerListPageState extends State<CustomerListPage> {
               child: Text(
                 'Nenhum cliente cadastrado ainda.\nClique no botão abaixo para adicionar.',
                 textAlign: TextAlign.center,
-                style: TextStyle(color: Colors.grey, fontSize: 16),
+                style: TextStyle(color: AppColors.textSecondary, fontSize: 16),
               ),
             );
           }
@@ -168,11 +167,11 @@ class _CustomerListPageState extends State<CustomerListPage> {
                 elevation: 2,
                 child: ListTile(
                   leading: CircleAvatar(
-                    backgroundColor: Colors.indigo.shade100,
+                    backgroundColor: AppColors.primaryLight,
                     child: Text(
                       customer.name.isNotEmpty ? customer.name[0].toUpperCase() : 'C',
                       style: const TextStyle(
-                        color: Colors.indigo,
+                        color: AppColors.primaryDark,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
@@ -189,7 +188,7 @@ class _CustomerListPageState extends State<CustomerListPage> {
                     ].where((item) => item != null && item.isNotEmpty).join(' • '),
                   ),
                   trailing: IconButton(
-                    icon: const Icon(Icons.delete, color: Colors.redAccent),
+                    icon: const Icon(Icons.delete, color: AppColors.danger),
                     onPressed: () async {
                       final confirmed = await _confirmDeleteCustomer(customer.name);
                       if (!confirmed || !context.mounted) return;
@@ -200,7 +199,7 @@ class _CustomerListPageState extends State<CustomerListPage> {
                             content: Text(
                               _controller.errorMessage ?? 'Erro ao excluir cliente.',
                             ),
-                            backgroundColor: Colors.red,
+                            backgroundColor: AppColors.danger,
                           ),
                         );
                       }
@@ -214,8 +213,6 @@ class _CustomerListPageState extends State<CustomerListPage> {
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _showAddCustomerDialog,
-        backgroundColor: Colors.indigo,
-        foregroundColor: Colors.white,
         icon: const Icon(Icons.person_add),
         label: const Text('Novo Cliente'),
       ),
