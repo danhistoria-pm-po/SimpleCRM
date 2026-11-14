@@ -1,12 +1,12 @@
 // lib/modules/pipeline/presentation/pipeline_page.dart
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/widgets/logout_action.dart';
 import '../controllers/pipeline_controller.dart';
 import '../models/deal_entity.dart';
 import '../components/pipeline_column.dart';
 import '../components/deal_form_modal.dart';
 import '../../customers/presentation/customer_controller.dart';
-import '../../auth/controllers/auth_controller.dart';
 
 class PipelinePage extends StatefulWidget {
   const PipelinePage({super.key});
@@ -18,7 +18,6 @@ class PipelinePage extends StatefulWidget {
 class _PipelinePageState extends State<PipelinePage> {
   final PipelineController _controller = PipelineController();
   final CustomerController _customerController = CustomerController();
-  final AuthController _authController = AuthController();
   final ScrollController _horizontalScrollController = ScrollController();
 
   @override
@@ -39,7 +38,6 @@ class _PipelinePageState extends State<PipelinePage> {
   void dispose() {
     _controller.removeListener(_onControllerChanged);
     _controller.dispose();
-    _authController.dispose();
     _horizontalScrollController.dispose();
     super.dispose();
   }
@@ -152,13 +150,7 @@ class _PipelinePageState extends State<PipelinePage> {
             tooltip: 'Atualizar Pipeline',
             onPressed: () => _loadDealsComTratamentoDeErro(silent: true),
           ),
-          IconButton(
-            icon: const Icon(Icons.logout),
-            tooltip: 'Sair',
-            onPressed: () async {
-              await _authController.logout();
-            },
-          ),
+          const LogoutAction(),
         ],
       ),
       body: _controller.isLoading

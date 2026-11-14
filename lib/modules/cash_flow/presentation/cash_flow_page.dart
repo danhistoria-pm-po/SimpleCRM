@@ -2,9 +2,9 @@
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/formatters.dart';
+import '../../../core/widgets/logout_action.dart';
 import '../controllers/cash_flow_controller.dart';
 import '../models/cash_flow_entry_entity.dart';
-import '../../auth/controllers/auth_controller.dart';
 
 class CashFlowPage extends StatefulWidget {
   const CashFlowPage({super.key});
@@ -15,7 +15,6 @@ class CashFlowPage extends StatefulWidget {
 
 class _CashFlowPageState extends State<CashFlowPage> {
   final CashFlowController _controller = CashFlowController();
-  final AuthController _authController = AuthController();
 
   @override
   void initState() {
@@ -26,7 +25,6 @@ class _CashFlowPageState extends State<CashFlowPage> {
   @override
   void dispose() {
     _controller.dispose();
-    _authController.dispose();
     super.dispose();
   }
 
@@ -98,13 +96,7 @@ class _CashFlowPageState extends State<CashFlowPage> {
             },
             tooltip: 'Atualizar',
           ),
-          IconButton(
-            icon: const Icon(Icons.logout),
-            tooltip: 'Sair',
-            onPressed: () async {
-              await _authController.logout();
-            },
-          ),
+          const LogoutAction(),
         ],
       ),
       body: AnimatedBuilder(

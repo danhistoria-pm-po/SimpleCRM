@@ -2,12 +2,12 @@
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/formatters.dart';
+import '../../../core/widgets/logout_action.dart';
 import '../controllers/billing_controller.dart';
 import '../models/invoice_entity.dart';
 import '../utils/nf_clipboard_helper.dart';
 import '../../customers/domain/entities/customer_entity.dart';
 import '../../customers/presentation/customer_controller.dart';
-import '../../auth/controllers/auth_controller.dart';
 
 class BillingPage extends StatefulWidget {
   const BillingPage({super.key});
@@ -19,7 +19,6 @@ class BillingPage extends StatefulWidget {
 class _BillingPageState extends State<BillingPage> {
   final BillingController _controller = BillingController();
   final CustomerController _customerController = CustomerController();
-  final AuthController _authController = AuthController();
 
   @override
   void initState() {
@@ -31,7 +30,6 @@ class _BillingPageState extends State<BillingPage> {
   @override
   void dispose() {
     _controller.dispose();
-    _authController.dispose();
     super.dispose();
   }
 
@@ -118,13 +116,7 @@ class _BillingPageState extends State<BillingPage> {
             },
             tooltip: 'Atualizar Faturas',
           ),
-          IconButton(
-            icon: const Icon(Icons.logout),
-            tooltip: 'Sair',
-            onPressed: () async {
-              await _authController.logout();
-            },
-          ),
+          const LogoutAction(),
         ],
       ),
       body: AnimatedBuilder(

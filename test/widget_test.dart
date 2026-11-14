@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:simple_crm/core/widgets/logout_action.dart';
+import 'package:simple_crm/modules/auth/controllers/auth_controller.dart';
 import 'package:simple_crm/modules/customers/domain/entities/customer_entity.dart';
 import 'package:simple_crm/modules/customers/presentation/customer_controller.dart';
 import 'package:simple_crm/modules/customers/presentation/customer_form_modal.dart';
@@ -14,6 +16,30 @@ class _InMemoryCustomerRepository extends CustomerRepository {
 
   @override
   Future<List<Customer>> getCustomers() async => initial;
+}
+
+class _FakeAuthController extends ChangeNotifier implements AuthController {
+  int logoutCallCount = 0;
+
+  @override
+  bool get isLoading => false;
+
+  @override
+  String? get errorMessage => null;
+
+  @override
+  bool get isAuthenticated => true;
+
+  @override
+  Future<bool> login(String email, String password) async => true;
+
+  @override
+  Future<bool> register(String email, String password) async => true;
+
+  @override
+  Future<void> logout() async {
+    logoutCallCount++;
+  }
 }
 
 void main() {
@@ -195,5 +221,43 @@ void main() {
 
     expect(tester.takeException(), isNull);
     expect(find.text('Nova Oportunidade'), findsOneWidget);
+  });
+
+  testWidgets('LogoutAction exibe confirmacao: Cancelar nao sai e Sair chama logout no fake', (
+    WidgetTester tester,
+  ) async {
+    final fakeAuth = _FakeAuthController();
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          appBar: AppBar(
+            actions: [
+              LogoutAction(authController: fakeAuth),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    // Clicar no botão Sair e depois em Cancelar
+    await tester.tap(find.byIcon(Icons.logout));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Deseja sair da conta?'), findsOneWidget);
+    await tester.tap(find.text('Cancelar'));
+    await tester.pumpAndSettle();
+
+    expect(fakeAuth.logoutCallCount, 0);
+
+    // Clicar no botão Sair e confirmar
+    await tester.tap(find.byIcon(Icons.logout));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Deseja sair da conta?'), findsOneWidget);
+    await tester.tap(find.widgetWithText(ElevatedButton, 'Sair'));
+    await tester.pumpAndSettle();
+
+    expect(fakeAuth.logoutCallCount, 1);
   });
 }

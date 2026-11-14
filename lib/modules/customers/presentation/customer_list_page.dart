@@ -1,9 +1,9 @@
 // lib/modules/customers/presentation/customer_list_page.dart
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/widgets/logout_action.dart';
 import 'customer_controller.dart';
 import 'customer_form_modal.dart';
-import '../../auth/controllers/auth_controller.dart';
 
 class CustomerListPage extends StatefulWidget {
   const CustomerListPage({super.key});
@@ -14,18 +14,11 @@ class CustomerListPage extends StatefulWidget {
 
 class _CustomerListPageState extends State<CustomerListPage> {
   final CustomerController _controller = CustomerController();
-  final AuthController _authController = AuthController();
 
   @override
   void initState() {
     super.initState();
     _controller.ensureLoaded();
-  }
-
-  @override
-  void dispose() {
-    _authController.dispose();
-    super.dispose();
   }
 
   Future<bool> _confirmDeleteCustomer(String customerName) async {
@@ -106,13 +99,7 @@ class _CustomerListPageState extends State<CustomerListPage> {
               }
             },
           ),
-          IconButton(
-            icon: const Icon(Icons.logout),
-            tooltip: 'Sair',
-            onPressed: () async {
-              await _authController.logout();
-            },
-          ),
+          const LogoutAction(),
         ],
       ),
       body: AnimatedBuilder(
