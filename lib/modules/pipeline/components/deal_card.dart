@@ -1,6 +1,7 @@
 // lib/modules/pipeline/components/deal_card.dart
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/utils/formatters.dart';
 import '../models/deal_entity.dart';
 
 class DealCard extends StatelessWidget {
@@ -44,7 +45,7 @@ class DealCard extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  'R\$ ${deal.value.toStringAsFixed(2)}',
+                  formatCurrency(deal.value),
                   style: const TextStyle(
                     fontWeight: FontWeight.w600,
                     color: AppColors.success,

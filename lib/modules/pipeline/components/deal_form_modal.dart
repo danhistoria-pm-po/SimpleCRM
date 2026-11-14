@@ -1,6 +1,7 @@
 // lib/modules/pipeline/components/deal_form_modal.dart
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/utils/formatters.dart';
 import '../../customers/domain/entities/customer_entity.dart';
 import '../../customers/presentation/customer_controller.dart';
 import '../models/deal_entity.dart';
@@ -124,9 +125,7 @@ class _DealFormModalState extends State<DealFormModal> {
                   decoration: const InputDecoration(labelText: 'Valor (R\$)'),
                   keyboardType: const TextInputType.numberWithOptions(decimal: true),
                   validator: (value) {
-                    final parsed = double.tryParse(
-                      (value ?? '').replaceAll(',', '.').trim(),
-                    );
+                    final parsed = parseCurrency(value ?? '');
                     return parsed == null || parsed <= 0
                         ? 'Informe um valor válido'
                         : null;
@@ -167,10 +166,8 @@ class _DealFormModalState extends State<DealFormModal> {
                         );
                         if (_formKey.currentState!.validate() &&
                             selectedCustomer != null) {
-                          final parsedValue = double.tryParse(
-                                _valueController.text.replaceAll(',', '.').trim(),
-                              ) ??
-                              0.0;
+                          final parsedValue =
+                              parseCurrency(_valueController.text) ?? 0.0;
                           final newDeal = DealEntity(
                             id: '',
                             customerId: selectedCustomer.id,

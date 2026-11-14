@@ -1,6 +1,7 @@
 // lib/features/follow_up/views/follow_up_view.dart
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/utils/formatters.dart';
 import '../controllers/follow_up_controller.dart';
 import '../models/follow_up_model.dart';
 import '../../../modules/customers/domain/entities/customer_entity.dart';
@@ -154,7 +155,7 @@ class _FollowUpViewState extends State<FollowUpView> {
           if (_controller.followUps.isEmpty) {
             return const Center(
               child: Text(
-                'Nenhum follow-up registado.\nClique no botão abaixo para agendar.',
+                'Nenhum follow-up cadastrado.\nClique no botão abaixo para agendar.',
                 textAlign: TextAlign.center,
                 style: TextStyle(color: AppColors.textSecondary, fontSize: 16),
               ),
@@ -274,7 +275,7 @@ class _FollowUpViewState extends State<FollowUpView> {
                             ],
                           ),
                           Text(
-                            'Agendado: ${_formatDate(item.scheduledDate)}',
+                            'Agendado: ${formatDate(item.scheduledDate)}',
                             style: const TextStyle(
                               fontSize: 12,
                               color: AppColors.textSecondary,
@@ -328,10 +329,6 @@ class _FollowUpViewState extends State<FollowUpView> {
       ),
     );
   }
-
-  String _formatDate(DateTime date) {
-    return '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year}';
-  }
 }
 
 class _FollowUpFormDialog extends StatefulWidget {
@@ -366,10 +363,6 @@ class _FollowUpFormDialogState extends State<_FollowUpFormDialog> {
       if (c.id == _selectedCustomerId) return c;
     }
     return null;
-  }
-
-  String _formatDate(DateTime date) {
-    return '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year}';
   }
 
   @override
@@ -436,7 +429,7 @@ class _FollowUpFormDialogState extends State<_FollowUpFormDialog> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text('Agendado p/: ${_formatDate(_scheduledDate)}'),
+                Text('Agendado p/: ${formatDate(_scheduledDate)}'),
                 TextButton.icon(
                   onPressed: () async {
                     final picked = await showDatePicker(
@@ -495,7 +488,7 @@ class _FollowUpFormDialogState extends State<_FollowUpFormDialog> {
             Navigator.pop(context);
             widget.onSave(newFollowUp);
           },
-          child: const Text('Guardar'),
+          child: const Text('Salvar'),
         ),
       ],
     );

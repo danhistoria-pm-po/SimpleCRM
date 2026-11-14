@@ -1,6 +1,7 @@
 // lib/modules/billing/presentation/billing_page.dart
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/utils/formatters.dart';
 import '../controllers/billing_controller.dart';
 import '../models/invoice_entity.dart';
 import '../utils/nf_clipboard_helper.dart';
@@ -165,7 +166,7 @@ class _BillingPageState extends State<BillingPage> {
                   Icon(Icons.receipt_long_outlined, size: 64, color: AppColors.textSecondary),
                   SizedBox(height: 16),
                   Text(
-                    'Nenhuma fatura registada.\nClique no botão abaixo para emitir.',
+                    'Nenhuma fatura cadastrada.\nClique no botão abaixo para emitir.',
                     textAlign: TextAlign.center,
                     style: TextStyle(fontSize: 16, color: AppColors.textSecondary),
                   ),
@@ -269,7 +270,7 @@ class _BillingPageState extends State<BillingPage> {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text(
-                            'Valor: R\$ ${invoice.amount.toStringAsFixed(2)}',
+                            'Valor: ${formatCurrency(invoice.amount)}',
                             style: const TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.w600,
@@ -277,7 +278,7 @@ class _BillingPageState extends State<BillingPage> {
                             ),
                           ),
                           Text(
-                            'Vencimento: ${_formatDate(invoice.dueDate)}',
+                            'Vencimento: ${formatDate(invoice.dueDate)}',
                             style: const TextStyle(color: AppColors.textSecondary),
                           ),
                         ],
@@ -355,10 +356,6 @@ class _BillingPageState extends State<BillingPage> {
       ),
     );
   }
-
-  String _formatDate(DateTime date) {
-    return '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year}';
-  }
 }
 
 class _InvoiceFormDialog extends StatefulWidget {
@@ -391,10 +388,6 @@ class _InvoiceFormDialogState extends State<_InvoiceFormDialog> {
       if (c.id == _selectedCustomerId) return c;
     }
     return null;
-  }
-
-  String _formatDate(DateTime date) {
-    return '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year}';
   }
 
   @override
@@ -453,7 +446,7 @@ class _InvoiceFormDialogState extends State<_InvoiceFormDialog> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text('Vencimento: ${_formatDate(_selectedDueDate)}'),
+                Text('Vencimento: ${formatDate(_selectedDueDate)}'),
                 TextButton.icon(
                   onPressed: () async {
                     final picked = await showDatePicker(
@@ -486,9 +479,7 @@ class _InvoiceFormDialogState extends State<_InvoiceFormDialog> {
             final selectedCustomer = _findSelectedCustomer(
               widget.customerController.customers,
             );
-            final parsedAmount = double.tryParse(
-              _amountController.text.replaceAll(',', '.').trim(),
-            );
+            final parsedAmount = parseCurrency(_amountController.text);
             if (selectedCustomer == null || parsedAmount == null || parsedAmount <= 0) {
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(

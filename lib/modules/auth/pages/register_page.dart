@@ -42,7 +42,7 @@ class _RegisterPageState extends State<RegisterPage> {
             backgroundColor: AppColors.success,
           ),
         );
-        Navigator.pop(context); // Voltar ao ecrã de login
+        Navigator.pop(context); // Voltar à tela de login
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -94,7 +94,7 @@ class _RegisterPageState extends State<RegisterPage> {
                     ),
                     const SizedBox(height: 8),
                     const Text(
-                      'Comece a gerir as suas vendas hoje mesmo',
+                      'Comece a gerenciar suas vendas hoje mesmo',
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         fontSize: 14,
@@ -130,12 +130,12 @@ class _RegisterPageState extends State<RegisterPage> {
                     ),
                     const SizedBox(height: 16),
 
-                    // Palavra-passe
+                    // Senha
                     TextFormField(
                       controller: _passwordController,
                       obscureText: _obscurePassword,
                       decoration: InputDecoration(
-                        labelText: 'Palavra-passe',
+                        labelText: 'Senha',
                         prefixIcon: const Icon(Icons.lock_outline),
                         filled: true,
                         fillColor: AppColors.surface,
@@ -160,14 +160,14 @@ class _RegisterPageState extends State<RegisterPage> {
                       ),
                       validator: (value) {
                         if (value == null || value.length < 6) {
-                          return 'A palavra-passe deve ter pelo menos 6 carateres';
+                          return 'A senha deve ter pelo menos 6 caracteres';
                         }
                         return null;
                       },
                     ),
                     const SizedBox(height: 24),
 
-                    // Botão Registar
+                    // Botão Cadastrar
                     AnimatedBuilder(
                       animation: _authController,
                       builder: (context, child) {
@@ -192,7 +192,7 @@ class _RegisterPageState extends State<RegisterPage> {
                                   ),
                                 )
                               : const Text(
-                                  'Registar Conta',
+                                  'Cadastrar Conta',
                                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                                 ),
                         );

@@ -48,25 +48,25 @@ class AuthRepository {
     try {
       await _supabase.auth.signOut();
     } catch (e) {
-      throw Exception('Erro ao terminar sessão: $e');
+      throw Exception('Erro ao sair da conta: $e');
     }
   }
 
-  // NOVO: Tradutor de erros do Supabase para português claro
+  // NOVO: Tradutor de erros do Supabase para português claro (pt-BR)
   String _translateError(AuthException e) {
     final message = e.message.toLowerCase();
     
     if (message.contains('invalid login credentials')) {
-      return 'E-mail ou palavra-passe incorretos.';
+      return 'E-mail ou senha incorretos.';
     }
     if (message.contains('email not confirmed')) {
       return 'Por favor, confirme o seu e-mail antes de entrar.';
     }
     if (message.contains('user already registered')) {
-      return 'Este e-mail já está registado. Tente fazer login.';
+      return 'Este e-mail já está cadastrado. Tente fazer login.';
     }
     if (message.contains('password should be at least 6 characters')) {
-      return 'A palavra-passe deve ter pelo menos 6 caracteres.';
+      return 'A senha deve ter pelo menos 6 caracteres.';
     }
     if (message.contains('rate limit')) {
       return 'Muitas tentativas. Aguarde um momento e tente novamente.';

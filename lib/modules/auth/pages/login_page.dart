@@ -122,12 +122,12 @@ class _LoginPageState extends State<LoginPage> {
                     ),
                     const SizedBox(height: 16),
 
-                    // Campo de Palavra-passe
+                    // Campo de Senha
                     TextFormField(
                       controller: _passwordController,
                       obscureText: _obscurePassword,
                       decoration: InputDecoration(
-                        labelText: 'Palavra-passe',
+                        labelText: 'Senha',
                         prefixIcon: const Icon(Icons.lock_outline),
                         filled: true,
                         fillColor: AppColors.surface,
@@ -152,7 +152,7 @@ class _LoginPageState extends State<LoginPage> {
                       ),
                       validator: (value) {
                         if (value == null || value.length < 6) {
-                          return 'A palavra-passe deve ter pelo menos 6 carateres';
+                          return 'A senha deve ter pelo menos 6 caracteres';
                         }
                         return null;
                       },
@@ -192,7 +192,7 @@ class _LoginPageState extends State<LoginPage> {
                     ),
                     const SizedBox(height: 16),
 
-                    // Link para Registo
+                    // Link para Cadastro
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
@@ -207,7 +207,7 @@ class _LoginPageState extends State<LoginPage> {
                               MaterialPageRoute(builder: (_) => const RegisterPage()),
                             );
                           },
-                          child: const Text('Registe-se'),
+                          child: const Text('Cadastre-se'),
                         ),
                       ],
                     ),

@@ -1,6 +1,7 @@
 // lib/modules/cash_flow/presentation/cash_flow_page.dart
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/utils/formatters.dart';
 import '../controllers/cash_flow_controller.dart';
 import '../models/cash_flow_entry_entity.dart';
 import '../../auth/controllers/auth_controller.dart';
@@ -157,7 +158,7 @@ class _CashFlowPageState extends State<CashFlowPage> {
                 child: _controller.entries.isEmpty
                     ? const Center(
                         child: Text(
-                          'Nenhum registo financeiro encontrado.\nClique no botão abaixo para lançar.',
+                          'Nenhum registro financeiro encontrado.\nClique no botão abaixo para lançar.',
                           textAlign: TextAlign.center,
                           style: TextStyle(fontSize: 16, color: AppColors.textSecondary),
                         ),
@@ -184,12 +185,12 @@ class _CashFlowPageState extends State<CashFlowPage> {
                                 entry.description,
                                 style: const TextStyle(fontWeight: FontWeight.bold),
                               ),
-                              subtitle: Text('Data: ${_formatDate(entry.date)}'),
+                              subtitle: Text('Data: ${formatDate(entry.date)}'),
                               trailing: Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
                                   Text(
-                                    '${isIncome ? '+' : '-'} R\$ ${entry.amount.toStringAsFixed(2)}',
+                                    '${isIncome ? '+' : '-'} ${formatCurrency(entry.amount)}',
                                     style: TextStyle(
                                       color: entryColor,
                                       fontWeight: FontWeight.bold,
@@ -251,15 +252,11 @@ class _CashFlowPageState extends State<CashFlowPage> {
         ),
         const SizedBox(height: 4),
         Text(
-          'R\$ ${amount.toStringAsFixed(2)}',
+          formatCurrency(amount),
           style: TextStyle(color: color, fontSize: 16, fontWeight: FontWeight.bold),
         ),
       ],
     );
-  }
-
-  String _formatDate(DateTime date) {
-    return '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year}';
   }
 }
 
@@ -335,9 +332,7 @@ class _CashFlowEntryFormDialogState extends State<_CashFlowEntryFormDialog> {
         ),
         ElevatedButton(
           onPressed: () {
-            final parsedAmount = double.tryParse(
-              _amountController.text.replaceAll(',', '.').trim(),
-            );
+            final parsedAmount = parseCurrency(_amountController.text);
             if (_descriptionController.text.trim().isEmpty ||
                 parsedAmount == null ||
                 parsedAmount <= 0) {

@@ -47,7 +47,7 @@ void main() {
 
     expect(find.text('Implantação ERP'), findsOneWidget);
     expect(find.text('Padaria Central'), findsOneWidget);
-    expect(find.text('R\$ 2500.00'), findsOneWidget);
+    expect(find.text('R\$ 2.500,00'), findsOneWidget);
 
     // Abrir menu popup e mudar para Cliente Ativo
     await tester.tap(find.byIcon(Icons.swap_horiz));

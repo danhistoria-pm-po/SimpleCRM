@@ -99,7 +99,7 @@ class FollowUpController extends ChangeNotifier {
     } catch (e) {
       followUps = previousList;
       errorMessage =
-          'Erro ao eliminar follow-up: ${e.toString().replaceAll("Exception: ", "")}';
+          'Erro ao excluir follow-up: ${e.toString().replaceAll("Exception: ", "")}';
       debugPrint(errorMessage);
       notifyListeners();
       return false;
