@@ -11,7 +11,10 @@ import 'package:simple_crm/modules/customers/presentation/customer_form_modal.da
 import 'package:simple_crm/modules/customers/repositories/customer_repository.dart';
 import 'package:simple_crm/modules/pipeline/components/deal_card.dart';
 import 'package:simple_crm/modules/pipeline/components/deal_form_modal.dart';
+import 'package:simple_crm/modules/pipeline/controllers/pipeline_controller.dart';
 import 'package:simple_crm/modules/pipeline/models/deal_entity.dart';
+import 'package:simple_crm/modules/pipeline/presentation/pipeline_page.dart';
+import 'package:simple_crm/modules/pipeline/repositories/pipeline_repository.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class _InMemoryCustomerRepository extends CustomerRepository {
@@ -20,6 +23,14 @@ class _InMemoryCustomerRepository extends CustomerRepository {
 
   @override
   Future<List<Customer>> getCustomers() async => initial;
+}
+
+class _InMemoryPipelineRepository extends PipelineRepository {
+  final List<DealEntity> initial;
+  _InMemoryPipelineRepository(this.initial);
+
+  @override
+  Future<List<DealEntity>> fetchDeals() async => initial;
 }
 
 class _FakeAuthController extends ChangeNotifier implements AuthController {
@@ -329,5 +340,78 @@ void main() {
       tester.widget<BottomNavigationBar>(find.byType(BottomNavigationBar)).currentIndex,
       0,
     );
+  });
+
+  testWidgets('Micro-Sprint 4.2: PipelinePage filtra cards por busca e por etapa e limpa busca', (
+    WidgetTester tester,
+  ) async {
+    final now = DateTime(2026, 11, 15);
+    final deals = [
+      DealEntity(
+        id: 'd1',
+        customerId: 'c1',
+        customerName: 'Mercado Alfa',
+        title: 'Consultoria Fiscal',
+        value: 1500.0,
+        stage: DealStage.potential,
+        createdAt: now,
+      ),
+      DealEntity(
+        id: 'd2',
+        customerId: 'c2',
+        customerName: 'Clínica Beta',
+        title: 'Licença Anual CRM',
+        value: 3200.0,
+        stage: DealStage.proposalSent,
+        createdAt: now,
+      ),
+    ];
+
+    final pipelineController = PipelineController(
+      repository: _InMemoryPipelineRepository(deals),
+    );
+    final customerController = CustomerController(
+      repository: _InMemoryCustomerRepository([]),
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: PipelinePage(
+          controller: pipelineController,
+          customerController: customerController,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // Inicialmente os 2 cards aparecem
+    expect(find.text('Consultoria Fiscal'), findsOneWidget);
+    expect(find.text('Licença Anual CRM'), findsOneWidget);
+
+    // Digitar na barra de busca pelo nome do cliente 'Clínica Beta'
+    await tester.enterText(
+      find.widgetWithText(TextField, 'Buscar por título ou cliente...'),
+      'Clínica Beta',
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Consultoria Fiscal'), findsNothing);
+    expect(find.text('Licença Anual CRM'), findsOneWidget);
+
+    // Clicar no botão de limpar busca (Icons.clear) restaura a listagem completa
+    await tester.tap(find.byIcon(Icons.clear));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Consultoria Fiscal'), findsOneWidget);
+    expect(find.text('Licença Anual CRM'), findsOneWidget);
+
+    // Filtrar por etapa 'Potencial' no dropdown
+    await tester.tap(find.byType(DropdownButton<DealStage?>));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Potencial').last);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Consultoria Fiscal'), findsOneWidget);
+    expect(find.text('Licença Anual CRM'), findsNothing);
   });
 }

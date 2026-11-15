@@ -9,20 +9,32 @@ import '../components/deal_form_modal.dart';
 import '../../customers/presentation/customer_controller.dart';
 
 class PipelinePage extends StatefulWidget {
-  const PipelinePage({super.key});
+  final PipelineController? controller;
+  final CustomerController? customerController;
+
+  const PipelinePage({
+    super.key,
+    this.controller,
+    this.customerController,
+  });
 
   @override
   State<PipelinePage> createState() => _PipelinePageState();
 }
 
 class _PipelinePageState extends State<PipelinePage> {
-  final PipelineController _controller = PipelineController();
-  final CustomerController _customerController = CustomerController();
+  late final PipelineController _controller;
+  late final CustomerController _customerController;
+  late final bool _ownsController;
   final ScrollController _horizontalScrollController = ScrollController();
+  final TextEditingController _searchController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
+    _ownsController = widget.controller == null;
+    _controller = widget.controller ?? PipelineController();
+    _customerController = widget.customerController ?? CustomerController();
     _controller.addListener(_onControllerChanged);
     _customerController.ensureLoaded();
     _loadDealsComTratamentoDeErro();
@@ -37,8 +49,11 @@ class _PipelinePageState extends State<PipelinePage> {
   @override
   void dispose() {
     _controller.removeListener(_onControllerChanged);
-    _controller.dispose();
+    if (_ownsController) {
+      _controller.dispose();
+    }
     _horizontalScrollController.dispose();
+    _searchController.dispose();
     super.dispose();
   }
 
@@ -139,6 +154,21 @@ class _PipelinePageState extends State<PipelinePage> {
     );
   }
 
+  String _getStageLabel(DealStage stage) {
+    switch (stage) {
+      case DealStage.potential:
+        return 'Potencial';
+      case DealStage.inNegotiation:
+        return 'Em Negociação';
+      case DealStage.proposalSent:
+        return 'Proposta Enviada';
+      case DealStage.activeClient:
+        return 'Cliente Ativo';
+      case DealStage.lost:
+        return 'Perdido';
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -155,7 +185,10 @@ class _PipelinePageState extends State<PipelinePage> {
       ),
       body: _controller.isLoading
           ? const Center(child: CircularProgressIndicator())
-          : (_controller.errorMessage != null && _controller.deals.isEmpty)
+          : (_controller.errorMessage != null &&
+                  _controller.deals.isEmpty &&
+                  _controller.searchQuery.isEmpty &&
+                  _controller.selectedStageFilter == null)
               ? Center(
                   child: Padding(
                     padding: const EdgeInsets.all(16.0),
@@ -177,67 +210,129 @@ class _PipelinePageState extends State<PipelinePage> {
                     ),
                   ),
                 )
-              : Padding(
-                  padding: const EdgeInsets.all(12.0),
-                  child: SingleChildScrollView(
-                    controller: _horizontalScrollController,
-                    scrollDirection: Axis.horizontal,
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        PipelineColumn(
-                          title: 'Potencial',
-                          stage: DealStage.potential,
-                          deals: _controller.deals
-                              .where((d) => d.stage == DealStage.potential)
-                              .toList(),
-                          headerColor: AppColors.stagePotential,
-                          onStageChanged: _handleUpdateStage,
-                          onDelete: _handleDeleteDeal,
-                        ),
-                        PipelineColumn(
-                          title: 'Em Negociação',
-                          stage: DealStage.inNegotiation,
-                          deals: _controller.deals
-                              .where((d) => d.stage == DealStage.inNegotiation)
-                              .toList(),
-                          headerColor: AppColors.stageNegotiation,
-                          onStageChanged: _handleUpdateStage,
-                          onDelete: _handleDeleteDeal,
-                        ),
-                        PipelineColumn(
-                          title: 'Proposta Enviada',
-                          stage: DealStage.proposalSent,
-                          deals: _controller.deals
-                              .where((d) => d.stage == DealStage.proposalSent)
-                              .toList(),
-                          headerColor: AppColors.stageProposal,
-                          onStageChanged: _handleUpdateStage,
-                          onDelete: _handleDeleteDeal,
-                        ),
-                        PipelineColumn(
-                          title: 'Cliente Ativo',
-                          stage: DealStage.activeClient,
-                          deals: _controller.deals
-                              .where((d) => d.stage == DealStage.activeClient)
-                              .toList(),
-                          headerColor: AppColors.stageActive,
-                          onStageChanged: _handleUpdateStage,
-                          onDelete: _handleDeleteDeal,
-                        ),
-                        PipelineColumn(
-                          title: 'Perdido',
-                          stage: DealStage.lost,
-                          deals: _controller.deals
-                              .where((d) => d.stage == DealStage.lost)
-                              .toList(),
-                          headerColor: AppColors.stageLost,
-                          onStageChanged: _handleUpdateStage,
-                          onDelete: _handleDeleteDeal,
-                        ),
-                      ],
+              : Column(
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: TextField(
+                              controller: _searchController,
+                              onChanged: _controller.setSearchQuery,
+                              decoration: InputDecoration(
+                                hintText: 'Buscar por título ou cliente...',
+                                prefixIcon: const Icon(Icons.search),
+                                isDense: true,
+                                suffixIcon: _controller.searchQuery.isNotEmpty
+                                    ? IconButton(
+                                        icon: const Icon(Icons.clear),
+                                        tooltip: 'Limpar busca',
+                                        onPressed: () {
+                                          _searchController.clear();
+                                          _controller.setSearchQuery('');
+                                        },
+                                      )
+                                    : null,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 12),
+                            decoration: BoxDecoration(
+                              color: AppColors.surface,
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: AppColors.border),
+                            ),
+                            child: DropdownButtonHideUnderline(
+                              child: DropdownButton<DealStage?>(
+                                value: _controller.selectedStageFilter,
+                                hint: const Text('Todas as etapas'),
+                                items: [
+                                  const DropdownMenuItem<DealStage?>(
+                                    value: null,
+                                    child: Text('Todas as etapas'),
+                                  ),
+                                  ...DealStage.values.map(
+                                    (stage) => DropdownMenuItem<DealStage?>(
+                                      value: stage,
+                                      child: Text(_getStageLabel(stage)),
+                                    ),
+                                  ),
+                                ],
+                                onChanged: _controller.setStageFilter,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
+                    Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.all(12.0),
+                        child: SingleChildScrollView(
+                          controller: _horizontalScrollController,
+                          scrollDirection: Axis.horizontal,
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              PipelineColumn(
+                                title: 'Potencial',
+                                stage: DealStage.potential,
+                                deals: _controller.deals
+                                    .where((d) => d.stage == DealStage.potential)
+                                    .toList(),
+                                headerColor: AppColors.stagePotential,
+                                onStageChanged: _handleUpdateStage,
+                                onDelete: _handleDeleteDeal,
+                              ),
+                              PipelineColumn(
+                                title: 'Em Negociação',
+                                stage: DealStage.inNegotiation,
+                                deals: _controller.deals
+                                    .where((d) => d.stage == DealStage.inNegotiation)
+                                    .toList(),
+                                headerColor: AppColors.stageNegotiation,
+                                onStageChanged: _handleUpdateStage,
+                                onDelete: _handleDeleteDeal,
+                              ),
+                              PipelineColumn(
+                                title: 'Proposta Enviada',
+                                stage: DealStage.proposalSent,
+                                deals: _controller.deals
+                                    .where((d) => d.stage == DealStage.proposalSent)
+                                    .toList(),
+                                headerColor: AppColors.stageProposal,
+                                onStageChanged: _handleUpdateStage,
+                                onDelete: _handleDeleteDeal,
+                              ),
+                              PipelineColumn(
+                                title: 'Cliente Ativo',
+                                stage: DealStage.activeClient,
+                                deals: _controller.deals
+                                    .where((d) => d.stage == DealStage.activeClient)
+                                    .toList(),
+                                headerColor: AppColors.stageActive,
+                                onStageChanged: _handleUpdateStage,
+                                onDelete: _handleDeleteDeal,
+                              ),
+                              PipelineColumn(
+                                title: 'Perdido',
+                                stage: DealStage.lost,
+                                deals: _controller.deals
+                                    .where((d) => d.stage == DealStage.lost)
+                                    .toList(),
+                                headerColor: AppColors.stageLost,
+                                onStageChanged: _handleUpdateStage,
+                                onDelete: _handleDeleteDeal,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _showAddDealDialog,
