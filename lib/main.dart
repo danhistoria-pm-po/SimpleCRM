@@ -43,7 +43,14 @@ class SimpleCRMApp extends StatelessWidget {
 }
 
 class AuthCheckPage extends StatefulWidget {
-  const AuthCheckPage({super.key});
+  final Stream<AuthState>? authStateStream;
+  final Session? Function()? currentSessionGetter;
+
+  const AuthCheckPage({
+    super.key,
+    this.authStateStream,
+    this.currentSessionGetter,
+  });
 
   @override
   State<AuthCheckPage> createState() => _AuthCheckPageState();
@@ -52,10 +59,17 @@ class AuthCheckPage extends StatefulWidget {
 class _AuthCheckPageState extends State<AuthCheckPage> {
   StreamSubscription<AuthState>? _authSubscription;
 
+  Stream<AuthState> get _stream =>
+      widget.authStateStream ?? Supabase.instance.client.auth.onAuthStateChange;
+
+  Session? get _currentSession => widget.currentSessionGetter != null
+      ? widget.currentSessionGetter!()
+      : Supabase.instance.client.auth.currentSession;
+
   @override
   void initState() {
     super.initState();
-    _authSubscription = Supabase.instance.client.auth.onAuthStateChange.listen((data) {
+    _authSubscription = _stream.listen((data) {
       final AuthChangeEvent event = data.event;
 
       if (event == AuthChangeEvent.signedOut) {
@@ -75,13 +89,12 @@ class _AuthCheckPageState extends State<AuthCheckPage> {
   @override
   Widget build(BuildContext context) {
     return StreamBuilder<AuthState>(
-      stream: Supabase.instance.client.auth.onAuthStateChange,
+      stream: _stream,
       builder: (context, snapshot) {
-        final session = snapshot.data?.session ??
-            Supabase.instance.client.auth.currentSession;
+        final session = snapshot.data?.session ?? _currentSession;
 
         if (session != null) {
-          return const HomePage();
+          return HomePage(key: ValueKey(session.user.id));
         } else {
           return const LoginPage();
         }

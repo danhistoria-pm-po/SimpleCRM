@@ -1,6 +1,9 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:simple_crm/core/widgets/logout_action.dart';
+import 'package:simple_crm/home_page.dart';
+import 'package:simple_crm/main.dart';
 import 'package:simple_crm/modules/auth/controllers/auth_controller.dart';
 import 'package:simple_crm/modules/customers/domain/entities/customer_entity.dart';
 import 'package:simple_crm/modules/customers/presentation/customer_controller.dart';
@@ -9,6 +12,7 @@ import 'package:simple_crm/modules/customers/repositories/customer_repository.da
 import 'package:simple_crm/modules/pipeline/components/deal_card.dart';
 import 'package:simple_crm/modules/pipeline/components/deal_form_modal.dart';
 import 'package:simple_crm/modules/pipeline/models/deal_entity.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class _InMemoryCustomerRepository extends CustomerRepository {
   final List<Customer> initial;
@@ -259,5 +263,71 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(fakeAuth.logoutCallCount, 1);
+  });
+
+  testWidgets('Micro-Sprint 4.1: AuthCheckPage instancia HomePage com ValueKey(user.id) e recria estado ao trocar de usuario', (
+    WidgetTester tester,
+  ) async {
+    final authStreamController = StreamController<AuthState>.broadcast();
+    addTearDown(() => authStreamController.close());
+
+    Session buildFakeSession(String userId) {
+      return Session(
+        accessToken: 'fake-token-$userId',
+        tokenType: 'bearer',
+        user: User(
+          id: userId,
+          appMetadata: const {},
+          userMetadata: const {},
+          aud: 'authenticated',
+          createdAt: DateTime(2026, 11, 15).toIso8601String(),
+        ),
+      );
+    }
+
+    final sessionA = buildFakeSession('user-a');
+    Session? currentSession = sessionA;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: AuthCheckPage(
+          authStateStream: authStreamController.stream,
+          currentSessionGetter: () => currentSession,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // Sessão ativa do usuário A -> HomePage instanciado com ValueKey('user-a')
+    final homeFinderA = find.byType(HomePage);
+    expect(homeFinderA, findsOneWidget);
+    expect(tester.widget<HomePage>(homeFinderA).key, const ValueKey('user-a'));
+    final stateUserA = tester.state(homeFinderA);
+
+    // Muda para a aba Clientes (índice 1) na sessão do usuário A
+    await tester.tap(find.text('Clientes'));
+    await tester.pumpAndSettle();
+    expect(
+      tester.widget<BottomNavigationBar>(find.byType(BottomNavigationBar)).currentIndex,
+      1,
+    );
+
+    // Troca para a sessão do usuário B
+    final sessionB = buildFakeSession('user-b');
+    currentSession = sessionB;
+    authStreamController.add(AuthState(AuthChangeEvent.signedIn, sessionB));
+    await tester.pumpAndSettle();
+
+    final homeFinderB = find.byType(HomePage);
+    expect(homeFinderB, findsOneWidget);
+    expect(tester.widget<HomePage>(homeFinderB).key, const ValueKey('user-b'));
+    final stateUserB = tester.state(homeFinderB);
+
+    // Garante que o State do HomePage (e das 5 abas filhas) foi descartado e recriado do zero (volta para aba 0)
+    expect(identical(stateUserA, stateUserB), isFalse);
+    expect(
+      tester.widget<BottomNavigationBar>(find.byType(BottomNavigationBar)).currentIndex,
+      0,
+    );
   });
 }
