@@ -389,6 +389,85 @@ void main() {
       expect(sawLoadingDuringRefresh, isFalse);
       expect(controller.deals.first.stage, DealStage.potential);
     });
+
+    test('mover card para activeClient gera automaticamente fatura, entrada no caixa e follow-up de pos-venda', () async {
+      final pipelineRepo = FakePipelineRepository();
+      final billingRepo = FakeBillingRepository();
+      final cashFlowRepo = FakeCashFlowRepository();
+      final followUpRepo = FakeFollowUpRepository();
+
+      pipelineRepo.store.add(
+        DealEntity(
+          id: '11111111-1111-1111-1111-111111111111',
+          customerId: '22222222-2222-2222-2222-222222222222',
+          customerName: 'Tech Solutions Ltda',
+          title: 'Implantação CRM Enterprise',
+          value: 4500.0,
+          stage: DealStage.proposalSent,
+          createdAt: now,
+        ),
+      );
+
+      final billingController = BillingController(repository: billingRepo);
+      final cashFlowController = CashFlowController(repository: cashFlowRepo);
+      final followUpController = FollowUpController(repository: followUpRepo);
+      final pipelineController = PipelineController(
+        repository: pipelineRepo,
+        billingController: billingController,
+        cashFlowController: cashFlowController,
+        followUpController: followUpController,
+      );
+
+      await pipelineController.loadDeals();
+      expect(pipelineController.deals.first.stage, DealStage.proposalSent);
+
+      // Mover para Cliente Ativo dispara a automação nos 3 módulos
+      final ok = await pipelineController.updateDealStage(
+        '11111111-1111-1111-1111-111111111111',
+        DealStage.activeClient,
+      );
+      expect(ok, isTrue);
+      expect(pipelineController.deals.first.stage, DealStage.activeClient);
+
+      // 1. Faturamento atualizado automaticamente
+      expect(billingController.invoices.length, 1);
+      expect(
+        billingController.invoices.first.customerId,
+        '22222222-2222-2222-2222-222222222222',
+      );
+      expect(
+        billingController.invoices.first.customerName,
+        'Tech Solutions Ltda - Implantação CRM Enterprise',
+      );
+      expect(billingController.invoices.first.amount, 4500.0);
+      expect(billingController.invoices.first.status, InvoiceStatus.paid);
+
+      // 2. Fluxo de Caixa atualizado automaticamente
+      expect(cashFlowController.entries.length, 1);
+      expect(cashFlowController.entries.first.type, CashFlowType.income);
+      expect(cashFlowController.entries.first.amount, 4500.0);
+      expect(
+        cashFlowController.entries.first.description,
+        contains('Implantação CRM Enterprise'),
+      );
+      expect(cashFlowController.totalIncome, 4500.0);
+
+      // 3. Pós-Venda agendado automaticamente
+      expect(followUpController.followUps.length, 1);
+      expect(
+        followUpController.followUps.first.customerId,
+        '22222222-2222-2222-2222-222222222222',
+      );
+      expect(
+        followUpController.followUps.first.dealId,
+        '11111111-1111-1111-1111-111111111111',
+      );
+      expect(
+        followUpController.followUps.first.title,
+        contains('Implantação CRM Enterprise'),
+      );
+      expect(followUpController.followUps.first.status, 'pendente');
+    });
   });
 
   group('CustomerController', () {

@@ -4,8 +4,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'core/theme/app_theme.dart';
+import 'features/follow_up/controllers/follow_up_controller.dart';
 import 'home_page.dart';
 import 'modules/auth/pages/login_page.dart';
+import 'modules/billing/controllers/billing_controller.dart';
+import 'modules/cash_flow/controllers/cash_flow_controller.dart';
 import 'modules/customers/presentation/customer_controller.dart';
 
 Future<void> main() async {
@@ -74,6 +77,9 @@ class _AuthCheckPageState extends State<AuthCheckPage> {
 
       if (event == AuthChangeEvent.signedOut) {
         CustomerController().reset();
+        BillingController().reset();
+        CashFlowController().reset();
+        FollowUpController().reset();
       } else if (event == AuthChangeEvent.signedIn) {
         CustomerController().ensureLoaded();
       }

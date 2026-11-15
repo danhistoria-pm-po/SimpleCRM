@@ -11,27 +11,24 @@ import '../../customers/domain/entities/customer_entity.dart';
 import '../../customers/presentation/customer_controller.dart';
 
 class BillingPage extends StatefulWidget {
-  const BillingPage({super.key});
+  final BillingController? controller;
+
+  const BillingPage({super.key, this.controller});
 
   @override
   State<BillingPage> createState() => _BillingPageState();
 }
 
 class _BillingPageState extends State<BillingPage> {
-  final BillingController _controller = BillingController();
+  late final BillingController _controller;
   final CustomerController _customerController = CustomerController();
 
   @override
   void initState() {
     super.initState();
+    _controller = widget.controller ?? BillingController();
     _customerController.ensureLoaded();
     _controller.loadInvoices();
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
   }
 
   Future<bool> _confirmDeleteInvoice(String customerName) async {

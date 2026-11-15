@@ -86,13 +86,23 @@ class _PipelinePageState extends State<PipelinePage> {
 
   Future<void> _handleUpdateStage(String id, DealStage newStage) async {
     final ok = await _controller.updateDealStage(id, newStage);
-    if (!ok && mounted) {
+    if (!mounted) return;
+    if (!ok) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
             'Erro ao mover oportunidade: ${_controller.errorMessage ?? "Erro desconhecido"}',
           ),
           backgroundColor: AppColors.danger,
+        ),
+      );
+    } else if (newStage == DealStage.activeClient) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Venda fechada! Fatura, entrada no Caixa e agendamento de Pós-Venda gerados automaticamente.',
+          ),
+          backgroundColor: AppColors.success,
         ),
       );
     }

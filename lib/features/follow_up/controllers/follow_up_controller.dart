@@ -4,15 +4,32 @@ import '../models/follow_up_model.dart';
 import '../repositories/follow_up_repository.dart';
 
 class FollowUpController extends ChangeNotifier {
-  final FollowUpRepository _repository;
+  static final FollowUpController _instance = FollowUpController._internal();
 
-  FollowUpController({FollowUpRepository? repository})
+  factory FollowUpController({FollowUpRepository? repository}) {
+    if (repository != null) {
+      return FollowUpController._internal(repository: repository);
+    }
+    return _instance;
+  }
+
+  FollowUpController._internal({FollowUpRepository? repository})
       : _repository = repository ?? FollowUpRepository();
+
+  final FollowUpRepository _repository;
 
   List<FollowUpModel> followUps = [];
   bool isLoading = false;
   bool isRefreshing = false;
   String? errorMessage;
+
+  void reset() {
+    followUps = [];
+    isLoading = false;
+    isRefreshing = false;
+    errorMessage = null;
+    notifyListeners();
+  }
 
   Future<bool> loadFollowUps({bool silent = false}) async {
     if (!silent && followUps.isEmpty) {

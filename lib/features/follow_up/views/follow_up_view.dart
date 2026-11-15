@@ -26,24 +26,14 @@ class FollowUpView extends StatefulWidget {
 class _FollowUpViewState extends State<FollowUpView> {
   late final FollowUpController _controller;
   late final CustomerController _customerController;
-  late final bool _ownsController;
 
   @override
   void initState() {
     super.initState();
-    _ownsController = widget.controller == null;
     _controller = widget.controller ?? FollowUpController();
     _customerController = widget.customerController ?? CustomerController();
     _customerController.ensureLoaded();
     _controller.loadFollowUps();
-  }
-
-  @override
-  void dispose() {
-    if (_ownsController) {
-      _controller.dispose();
-    }
-    super.dispose();
   }
 
   Future<bool> _confirmDeleteFollowUp(String title) async {

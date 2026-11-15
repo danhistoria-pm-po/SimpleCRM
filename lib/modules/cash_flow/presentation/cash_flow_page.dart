@@ -8,25 +8,22 @@ import '../controllers/cash_flow_controller.dart';
 import '../models/cash_flow_entry_entity.dart';
 
 class CashFlowPage extends StatefulWidget {
-  const CashFlowPage({super.key});
+  final CashFlowController? controller;
+
+  const CashFlowPage({super.key, this.controller});
 
   @override
   State<CashFlowPage> createState() => _CashFlowPageState();
 }
 
 class _CashFlowPageState extends State<CashFlowPage> {
-  final CashFlowController _controller = CashFlowController();
+  late final CashFlowController _controller;
 
   @override
   void initState() {
     super.initState();
+    _controller = widget.controller ?? CashFlowController();
     _controller.loadEntries();
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
   }
 
   Future<bool> _confirmDeleteEntry(String description) async {

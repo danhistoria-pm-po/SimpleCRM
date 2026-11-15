@@ -4,10 +4,19 @@ import '../models/invoice_entity.dart';
 import '../repositories/billing_repository.dart';
 
 class BillingController extends ChangeNotifier {
-  final BillingRepository _repository;
+  static final BillingController _instance = BillingController._internal();
 
-  BillingController({BillingRepository? repository})
+  factory BillingController({BillingRepository? repository}) {
+    if (repository != null) {
+      return BillingController._internal(repository: repository);
+    }
+    return _instance;
+  }
+
+  BillingController._internal({BillingRepository? repository})
       : _repository = repository ?? BillingRepository();
+
+  final BillingRepository _repository;
 
   List<InvoiceEntity> _invoices = [];
   bool _isLoading = false;
@@ -18,6 +27,14 @@ class BillingController extends ChangeNotifier {
   bool get isLoading => _isLoading;
   bool get isRefreshing => _isRefreshing;
   String? get errorMessage => _errorMessage;
+
+  void reset() {
+    _invoices = [];
+    _isLoading = false;
+    _isRefreshing = false;
+    _errorMessage = null;
+    notifyListeners();
+  }
 
   Future<bool> loadInvoices({bool silent = false}) async {
     if (!silent && _invoices.isEmpty) {
