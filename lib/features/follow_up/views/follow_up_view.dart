@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../core/widgets/logout_action.dart';
+import '../../../core/widgets/tutorial_help_action.dart';
 import '../controllers/follow_up_controller.dart';
 import '../models/follow_up_model.dart';
 import '../../../modules/customers/domain/entities/customer_entity.dart';
@@ -123,6 +124,7 @@ class _FollowUpViewState extends State<FollowUpView> {
               }
             },
           ),
+          const TutorialHelpAction(),
           const LogoutAction(),
         ],
       ),

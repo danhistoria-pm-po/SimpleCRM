@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:simple_crm/core/widgets/logout_action.dart';
+import 'package:simple_crm/core/widgets/tutorial_help_action.dart';
 import 'package:simple_crm/features/follow_up/controllers/follow_up_controller.dart';
 import 'package:simple_crm/features/follow_up/models/follow_up_model.dart';
 import 'package:simple_crm/features/follow_up/repositories/follow_up_repository.dart';
@@ -618,5 +619,55 @@ void main() {
 
     expect(fakeAuth.registerCallCount, 1);
     expect(fakeAuth.lastRegisteredEmail, 'novo@empresa.com');
+  });
+
+  testWidgets('Tutorial de Imersao: exibe botao Assistir Video Tutorial e abre modal responsivo com link do Google Drive', (
+    WidgetTester tester,
+  ) async {
+    String? launchedUrl;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          appBar: AppBar(
+            actions: [
+              TutorialHelpAction(
+                urlLauncher: (url) async {
+                  launchedUrl = url;
+                  return true;
+                },
+              ),
+            ],
+          ),
+          body: TutorialQuickAccessBanner(
+            urlLauncher: (url) async {
+              launchedUrl = url;
+              return true;
+            },
+          ),
+        ),
+      ),
+    );
+
+    expect(
+      find.text('Assistir Vídeo Tutorial - Imersão SimpleCRM'),
+      findsOneWidget,
+    );
+
+    // Clicar no ícone de Ajuda na AppBar abre o modal com o botão e o link do Google Drive
+    await tester.tap(find.byIcon(Icons.help_outline));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Ajuda — Imersão SimpleCRM'), findsOneWidget);
+    expect(find.text(kTutorialVideoUrl), findsOneWidget);
+
+    // Clicar no botão do modal aciona a abertura do link oficial do vídeo
+    await tester.tap(find.byKey(const ValueKey('btn-modal-watch-tutorial')));
+    await tester.pumpAndSettle();
+
+    expect(
+      launchedUrl,
+      'https://drive.google.com/file/d/1cZTOqHp8ep5uqpEN_34VWIOzUbxrZfkg/view?usp=sharing',
+    );
   });
 }

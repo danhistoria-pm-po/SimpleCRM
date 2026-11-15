@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/logout_action.dart';
+import '../../../core/widgets/tutorial_help_action.dart';
 import '../domain/entities/customer_entity.dart';
 import 'customer_controller.dart';
 import 'customer_form_modal.dart';
@@ -136,6 +137,7 @@ class _CustomerListPageState extends State<CustomerListPage> {
               }
             },
           ),
+          const TutorialHelpAction(),
           const LogoutAction(),
         ],
       ),

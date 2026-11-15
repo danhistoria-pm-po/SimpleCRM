@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../core/widgets/logout_action.dart';
+import '../../../core/widgets/tutorial_help_action.dart';
 import '../controllers/cash_flow_controller.dart';
 import '../models/cash_flow_entry_entity.dart';
 
@@ -96,6 +97,7 @@ class _CashFlowPageState extends State<CashFlowPage> {
             },
             tooltip: 'Atualizar',
           ),
+          const TutorialHelpAction(),
           const LogoutAction(),
         ],
       ),

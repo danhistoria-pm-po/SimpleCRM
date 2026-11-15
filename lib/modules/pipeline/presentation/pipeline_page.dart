@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/logout_action.dart';
+import '../../../core/widgets/tutorial_help_action.dart';
 import '../controllers/pipeline_controller.dart';
 import '../models/deal_entity.dart';
 import '../components/pipeline_column.dart';
@@ -180,6 +181,7 @@ class _PipelinePageState extends State<PipelinePage> {
             tooltip: 'Atualizar Pipeline',
             onPressed: () => _loadDealsComTratamentoDeErro(silent: true),
           ),
+          const TutorialHelpAction(),
           const LogoutAction(),
         ],
       ),
@@ -211,7 +213,12 @@ class _PipelinePageState extends State<PipelinePage> {
                   ),
                 )
               : Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
+                    const Padding(
+                      padding: EdgeInsets.fromLTRB(12, 12, 12, 0),
+                      child: TutorialQuickAccessBanner(),
+                    ),
                     Padding(
                       padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
                       child: Row(

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../core/widgets/logout_action.dart';
+import '../../../core/widgets/tutorial_help_action.dart';
 import '../controllers/billing_controller.dart';
 import '../models/invoice_entity.dart';
 import '../utils/nf_clipboard_helper.dart';
@@ -116,6 +117,7 @@ class _BillingPageState extends State<BillingPage> {
             },
             tooltip: 'Atualizar Faturas',
           ),
+          const TutorialHelpAction(),
           const LogoutAction(),
         ],
       ),

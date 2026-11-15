@@ -1,6 +1,7 @@
 // lib/modules/auth/pages/login_page.dart
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/widgets/tutorial_help_action.dart';
 import '../controllers/auth_controller.dart';
 import 'register_page.dart';
 
@@ -210,6 +211,30 @@ class _LoginPageState extends State<LoginPage> {
                           child: const Text('Cadastre-se'),
                         ),
                       ],
+                    ),
+                    const SizedBox(height: 12),
+                    OutlinedButton.icon(
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: AppColors.primary,
+                        side: const BorderSide(color: AppColors.primary),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 12,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      onPressed: () => showTutorialVideoModal(context),
+                      icon: const Icon(Icons.play_circle_outline, size: 20),
+                      label: const Text(
+                        'Assistir Vídeo Tutorial - Imersão SimpleCRM',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
                     ),
                   ],
                 ),
