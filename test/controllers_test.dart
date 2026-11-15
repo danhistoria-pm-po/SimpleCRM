@@ -303,6 +303,45 @@ void main() {
       expect(controller.followUps.first.status, 'pendente');
       expect(controller.followUps.first.receivedDate, isNull);
     });
+
+    test('setSatisfactionScore atualiza nota (1 a 5), rejeita fora da faixa e faz rollback em erro', () async {
+      final repo = FakeFollowUpRepository();
+      final controller = FollowUpController(repository: repo);
+
+      await controller.addFollowUp(
+        FollowUpModel(
+          id: '',
+          customerId: 'c1',
+          title: 'Pesquisa NPS',
+          scheduledDate: now,
+          status: 'pendente',
+          isReceived: false,
+          createdAt: now,
+        ),
+      );
+      final item = controller.followUps.first;
+      expect(item.satisfactionScore, isNull);
+
+      // Rejeita notas fora do intervalo 1..5
+      expect(await controller.setSatisfactionScore(item, 0), isFalse);
+      expect(await controller.setSatisfactionScore(item, 6), isFalse);
+      expect(controller.followUps.first.satisfactionScore, isNull);
+
+      // Atualiza para nota 5 com sucesso
+      final okScore = await controller.setSatisfactionScore(item, 5);
+      expect(okScore, isTrue);
+      expect(controller.followUps.first.satisfactionScore, 5);
+
+      // Se o repositório falhar, reverte para a nota anterior (5)
+      repo.shouldFail = true;
+      final failedScore = await controller.setSatisfactionScore(
+        controller.followUps.first,
+        2,
+      );
+      expect(failedScore, isFalse);
+      expect(controller.followUps.first.satisfactionScore, 5);
+      expect(controller.errorMessage, isNotNull);
+    });
   });
 
   group('PipelineController', () {

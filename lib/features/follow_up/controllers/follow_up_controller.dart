@@ -87,6 +87,13 @@ class FollowUpController extends ChangeNotifier {
     return updateFollowUp(updated);
   }
 
+  // Define a nota de satisfação (1 a 5) do cliente no pós-venda
+  Future<bool> setSatisfactionScore(FollowUpModel followUp, int score) async {
+    if (score < 1 || score > 5) return false;
+    final updated = followUp.copyWith(satisfactionScore: score);
+    return updateFollowUp(updated);
+  }
+
   Future<bool> deleteFollowUp(String id) async {
     final previousList = List<FollowUpModel>.from(followUps);
     followUps.removeWhere((f) => f.id == id);

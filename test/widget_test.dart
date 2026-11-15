@@ -2,6 +2,10 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:simple_crm/core/widgets/logout_action.dart';
+import 'package:simple_crm/features/follow_up/controllers/follow_up_controller.dart';
+import 'package:simple_crm/features/follow_up/models/follow_up_model.dart';
+import 'package:simple_crm/features/follow_up/repositories/follow_up_repository.dart';
+import 'package:simple_crm/features/follow_up/views/follow_up_view.dart';
 import 'package:simple_crm/home_page.dart';
 import 'package:simple_crm/main.dart';
 import 'package:simple_crm/modules/auth/controllers/auth_controller.dart';
@@ -40,6 +44,23 @@ class _InMemoryPipelineRepository extends PipelineRepository {
 
   @override
   Future<List<DealEntity>> fetchDeals() async => initial;
+}
+
+class _InMemoryFollowUpRepository extends FollowUpRepository {
+  final List<FollowUpModel> initial;
+  _InMemoryFollowUpRepository(this.initial);
+
+  @override
+  Future<List<FollowUpModel>> getFollowUps() async =>
+      List<FollowUpModel>.from(initial);
+
+  @override
+  Future<void> updateFollowUp(FollowUpModel followUp) async {
+    final index = initial.indexWhere((f) => f.id == followUp.id);
+    if (index != -1) {
+      initial[index] = followUp;
+    }
+  }
 }
 
 class _FakeAuthController extends ChangeNotifier implements AuthController {
@@ -486,5 +507,59 @@ void main() {
     // Verifica que a lista foi atualizada com os novos dados
     expect(find.text('Padaria Estrela Ouro'), findsOneWidget);
     expect(find.text('Contrato anual renovado'), findsOneWidget);
+  });
+
+  testWidgets('Micro-Sprint 4.4: FollowUpView exibe e atualiza avaliacao de satisfacao (1 a 5 estrelas)', (
+    WidgetTester tester,
+  ) async {
+    final now = DateTime(2026, 11, 15);
+    final followUpRepo = _InMemoryFollowUpRepository([
+      FollowUpModel(
+        id: 'f1',
+        customerId: 'c1',
+        title: 'Onboarding Concluído',
+        description: 'Verificar adaptação da equipe',
+        scheduledDate: now,
+        status: 'concluido',
+        isReceived: true,
+        createdAt: now,
+      ),
+    ]);
+    final customerRepo = _InMemoryCustomerRepository([
+      Customer(
+        id: 'c1',
+        name: 'Clínica Sol',
+        createdAt: now,
+        updatedAt: now,
+      ),
+    ]);
+
+    final followUpController = FollowUpController(repository: followUpRepo);
+    final customerController = CustomerController(repository: customerRepo);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: FollowUpView(
+          controller: followUpController,
+          customerController: customerController,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // Inicialmente exibe 'Sem nota' e 5 estrelas vazias
+    expect(find.text('Onboarding Concluído'), findsOneWidget);
+    expect(find.text('Sem nota'), findsOneWidget);
+    expect(find.byIcon(Icons.star_border), findsNWidgets(5));
+    expect(find.byIcon(Icons.star), findsNothing);
+
+    // Clicar na 4ª estrela define a nota 4/5
+    await tester.tap(find.byKey(const ValueKey('follow-up-f1-star-4')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('4/5'), findsOneWidget);
+    expect(find.byIcon(Icons.star), findsNWidgets(4));
+    expect(find.byIcon(Icons.star_border), findsNWidgets(1));
+    expect(followUpController.followUps.first.satisfactionScore, 4);
   });
 }

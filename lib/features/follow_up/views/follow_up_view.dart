@@ -9,26 +9,39 @@ import '../../../modules/customers/domain/entities/customer_entity.dart';
 import '../../../modules/customers/presentation/customer_controller.dart';
 
 class FollowUpView extends StatefulWidget {
-  const FollowUpView({super.key});
+  final FollowUpController? controller;
+  final CustomerController? customerController;
+
+  const FollowUpView({
+    super.key,
+    this.controller,
+    this.customerController,
+  });
 
   @override
   State<FollowUpView> createState() => _FollowUpViewState();
 }
 
 class _FollowUpViewState extends State<FollowUpView> {
-  final FollowUpController _controller = FollowUpController();
-  final CustomerController _customerController = CustomerController();
+  late final FollowUpController _controller;
+  late final CustomerController _customerController;
+  late final bool _ownsController;
 
   @override
   void initState() {
     super.initState();
+    _ownsController = widget.controller == null;
+    _controller = widget.controller ?? FollowUpController();
+    _customerController = widget.customerController ?? CustomerController();
     _customerController.ensureLoaded();
     _controller.loadFollowUps();
   }
 
   @override
   void dispose() {
-    _controller.dispose();
+    if (_ownsController) {
+      _controller.dispose();
+    }
     super.dispose();
   }
 
@@ -272,6 +285,70 @@ class _FollowUpViewState extends State<FollowUpView> {
                               fontSize: 12,
                               color: AppColors.textSecondary,
                             ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text(
+                            'Satisfação:',
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: AppColors.textSecondary,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              for (int star = 1; star <= 5; star++)
+                                IconButton(
+                                  key: ValueKey('follow-up-${item.id}-star-$star'),
+                                  padding: const EdgeInsets.symmetric(horizontal: 2),
+                                  constraints: const BoxConstraints(
+                                    minWidth: 32,
+                                    minHeight: 32,
+                                  ),
+                                  tooltip: 'Nota $star',
+                                  icon: Icon(
+                                    (item.satisfactionScore ?? 0) >= star
+                                        ? Icons.star
+                                        : Icons.star_border,
+                                    color: (item.satisfactionScore ?? 0) >= star
+                                        ? AppColors.warning
+                                        : AppColors.textSecondary,
+                                    size: 22,
+                                  ),
+                                  onPressed: () async {
+                                    final ok = await _controller.setSatisfactionScore(
+                                      item,
+                                      star,
+                                    );
+                                    if (!ok &&
+                                        context.mounted &&
+                                        _controller.errorMessage != null) {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        SnackBar(
+                                          content: Text(_controller.errorMessage!),
+                                          backgroundColor: AppColors.danger,
+                                        ),
+                                      );
+                                    }
+                                  },
+                                ),
+                              const SizedBox(width: 4),
+                              Text(
+                                item.satisfactionScore != null
+                                    ? '${item.satisfactionScore}/5'
+                                    : 'Sem nota',
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  color: AppColors.textSecondary,
+                                ),
+                              ),
+                            ],
                           ),
                         ],
                       ),
