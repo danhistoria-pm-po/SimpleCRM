@@ -123,6 +123,46 @@ class CustomerController extends ChangeNotifier {
     }
   }
 
+  // Atualiza um cliente existente e sincroniza a lista local
+  Future<bool> updateCustomer({
+    required String id,
+    required String name,
+    String? phone,
+    String? email,
+    String? address,
+    CustomerStatus status = CustomerStatus.potential,
+    String? notes,
+  }) async {
+    final now = DateTime.now();
+    final existingIndex = _customers.indexWhere((c) => c.id == id);
+    final createdAt =
+        existingIndex != -1 ? _customers[existingIndex].createdAt : now;
+
+    final updatedCustomer = Customer(
+      id: id,
+      name: name,
+      phone: phone,
+      email: email,
+      address: address,
+      status: status,
+      notes: notes,
+      createdAt: createdAt,
+      updatedAt: now,
+    );
+
+    try {
+      _errorMessage = null;
+      await _repository.updateCustomer(updatedCustomer);
+      await loadCustomers(silent: true);
+      return true;
+    } catch (e) {
+      _errorMessage = e.toString().replaceAll('Exception: ', '');
+      debugPrint('Erro ao atualizar cliente: $_errorMessage');
+      notifyListeners();
+      return false;
+    }
+  }
+
   // Remove o cliente do Supabase via RPC delete_customer_safe
   Future<bool> removeCustomer(String id) async {
     try {

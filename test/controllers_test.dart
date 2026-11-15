@@ -161,6 +161,15 @@ class FakeCustomerRepository extends CustomerRepository {
   }
 
   @override
+  Future<void> updateCustomer(Customer customer) async {
+    if (shouldFail) throw Exception('Falha ao atualizar cliente');
+    final idx = store.indexWhere((c) => c.id == customer.id);
+    if (idx != -1) {
+      store[idx] = customer;
+    }
+  }
+
+  @override
   Future<void> deleteCustomer(String id) async {
     if (failWithVinculos) {
       throw Exception(
@@ -390,6 +399,47 @@ void main() {
         controller.errorMessage,
         'Este cliente possui faturas ou follow-ups. Exclua-os antes de remover o cliente.',
       );
+    });
+
+    test('updateCustomer atualiza dados e observacoes e trata erro sem propagar excecao', () async {
+      final repo = FakeCustomerRepository();
+      final controller = CustomerController(repository: repo);
+
+      final added = await controller.addCustomer(
+        name: 'Empresa Original',
+        phone: '11999990000',
+        email: 'contato@original.com',
+        notes: 'Observação inicial',
+      );
+      expect(added, isTrue);
+      expect(controller.customers.length, 1);
+      final id = controller.customers.first.id;
+
+      final updated = await controller.updateCustomer(
+        id: id,
+        name: 'Empresa Atualizada',
+        phone: '11988887777',
+        email: 'novo@atualizada.com',
+        address: 'Av. Paulista, 1000',
+        notes: 'Cliente VIP com contrato renovado',
+      );
+      expect(updated, isTrue);
+      expect(controller.customers.first.name, 'Empresa Atualizada');
+      expect(controller.customers.first.phone, '11988887777');
+      expect(controller.customers.first.email, 'novo@atualizada.com');
+      expect(controller.customers.first.address, 'Av. Paulista, 1000');
+      expect(
+        controller.customers.first.notes,
+        'Cliente VIP com contrato renovado',
+      );
+
+      repo.shouldFail = true;
+      final failedUpdate = await controller.updateCustomer(
+        id: id,
+        name: 'Tentativa Falha',
+      );
+      expect(failedUpdate, isFalse);
+      expect(controller.errorMessage, contains('Falha ao atualizar cliente'));
     });
   });
 }

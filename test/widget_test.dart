@@ -8,6 +8,7 @@ import 'package:simple_crm/modules/auth/controllers/auth_controller.dart';
 import 'package:simple_crm/modules/customers/domain/entities/customer_entity.dart';
 import 'package:simple_crm/modules/customers/presentation/customer_controller.dart';
 import 'package:simple_crm/modules/customers/presentation/customer_form_modal.dart';
+import 'package:simple_crm/modules/customers/presentation/customer_list_page.dart';
 import 'package:simple_crm/modules/customers/repositories/customer_repository.dart';
 import 'package:simple_crm/modules/pipeline/components/deal_card.dart';
 import 'package:simple_crm/modules/pipeline/components/deal_form_modal.dart';
@@ -22,7 +23,15 @@ class _InMemoryCustomerRepository extends CustomerRepository {
   _InMemoryCustomerRepository(this.initial);
 
   @override
-  Future<List<Customer>> getCustomers() async => initial;
+  Future<List<Customer>> getCustomers() async => List<Customer>.from(initial);
+
+  @override
+  Future<void> updateCustomer(Customer customer) async {
+    final index = initial.indexWhere((c) => c.id == customer.id);
+    if (index != -1) {
+      initial[index] = customer;
+    }
+  }
 }
 
 class _InMemoryPipelineRepository extends PipelineRepository {
@@ -413,5 +422,69 @@ void main() {
 
     expect(find.text('Consultoria Fiscal'), findsOneWidget);
     expect(find.text('Licença Anual CRM'), findsNothing);
+  });
+
+  testWidgets('Micro-Sprint 4.3: CustomerListPage exibe observacoes (notes) e edita cliente existente via CustomerFormModal', (
+    WidgetTester tester,
+  ) async {
+    final now = DateTime(2026, 11, 15);
+    final repo = _InMemoryCustomerRepository([
+      Customer(
+        id: 'c1',
+        name: 'Padaria Estrela',
+        phone: '11999991111',
+        email: 'contato@estrela.com',
+        address: 'Rua das Flores, 50',
+        notes: 'Prefere atendimento no período da manhã',
+        createdAt: now,
+        updatedAt: now,
+      ),
+    ]);
+    final customerController = CustomerController(repository: repo);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: CustomerListPage(controller: customerController),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // Verifica que o nome, contato e observações (notes) aparecem no card
+    expect(find.text('Padaria Estrela'), findsOneWidget);
+    expect(
+      find.text('11999991111 • contato@estrela.com • Rua das Flores, 50'),
+      findsOneWidget,
+    );
+    expect(
+      find.text('Prefere atendimento no período da manhã'),
+      findsOneWidget,
+    );
+
+    // Clicar no botão Editar Cliente abre o CustomerFormModal preenchido
+    await tester.tap(find.byIcon(Icons.edit_outlined));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Editar Cliente'), findsOneWidget);
+    expect(find.widgetWithText(TextField, 'Padaria Estrela'), findsOneWidget);
+    expect(
+      find.widgetWithText(TextField, 'Prefere atendimento no período da manhã'),
+      findsOneWidget,
+    );
+
+    // Alterar nome e observações e salvar
+    await tester.enterText(
+      find.widgetWithText(TextField, 'Nome *'),
+      'Padaria Estrela Ouro',
+    );
+    await tester.enterText(
+      find.widgetWithText(TextField, 'Observações'),
+      'Contrato anual renovado',
+    );
+    await tester.tap(find.text('Salvar'));
+    await tester.pumpAndSettle();
+
+    // Verifica que a lista foi atualizada com os novos dados
+    expect(find.text('Padaria Estrela Ouro'), findsOneWidget);
+    expect(find.text('Contrato anual renovado'), findsOneWidget);
   });
 }

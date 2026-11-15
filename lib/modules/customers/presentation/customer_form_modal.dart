@@ -1,7 +1,9 @@
 // lib/modules/customers/presentation/customer_form_modal.dart
 import 'package:flutter/material.dart';
+import '../domain/entities/customer_entity.dart';
 
 class CustomerFormModal extends StatefulWidget {
+  final Customer? initialCustomer;
   final Function({
     required String name,
     String? phone,
@@ -10,7 +12,11 @@ class CustomerFormModal extends StatefulWidget {
     String? notes,
   }) onSave;
 
-  const CustomerFormModal({super.key, required this.onSave});
+  const CustomerFormModal({
+    super.key,
+    required this.onSave,
+    this.initialCustomer,
+  });
 
   @override
   State<CustomerFormModal> createState() => _CustomerFormModalState();
@@ -24,6 +30,19 @@ class _CustomerFormModalState extends State<CustomerFormModal> {
   final _notesController = TextEditingController();
 
   @override
+  void initState() {
+    super.initState();
+    final initial = widget.initialCustomer;
+    if (initial != null) {
+      _nameController.text = initial.name;
+      _phoneController.text = initial.phone ?? '';
+      _emailController.text = initial.email ?? '';
+      _addressController.text = initial.address ?? '';
+      _notesController.text = initial.notes ?? '';
+    }
+  }
+
+  @override
   void dispose() {
     _nameController.dispose();
     _phoneController.dispose();
@@ -35,9 +54,10 @@ class _CustomerFormModalState extends State<CustomerFormModal> {
 
   @override
   Widget build(BuildContext context) {
+    final isEditing = widget.initialCustomer != null;
     return AlertDialog(
       insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
-      title: const Text('Novo Cliente'),
+      title: Text(isEditing ? 'Editar Cliente' : 'Novo Cliente'),
       content: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 480),
         child: SingleChildScrollView(

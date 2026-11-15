@@ -54,6 +54,33 @@ class CustomerRepository {
     }
   }
 
+  // Atualizar os dados de um cliente existente na tabela 'customers'
+  // e manter customer_name sincronizado em deals e invoices vinculados.
+  Future<void> updateCustomer(Customer customer) async {
+    try {
+      await _supabase.from('customers').update({
+        'name': customer.name,
+        'phone': customer.phone,
+        'email': customer.email,
+        'address': customer.address,
+        'notes': customer.notes,
+        'updated_at': DateTime.now().toUtc().toIso8601String(),
+      }).eq('id', customer.id);
+
+      await _supabase
+          .from('deals')
+          .update({'customer_name': customer.name})
+          .eq('customer_id', customer.id);
+
+      await _supabase
+          .from('invoices')
+          .update({'customer_name': customer.name})
+          .eq('customer_id', customer.id);
+    } catch (e) {
+      rethrow;
+    }
+  }
+
   // Deletar um cliente de forma atômica via RPC delete_customer_safe
   // Bloqueia se houver faturas (invoices) ou follow-ups vinculados; caso contrário, remove deals e o cliente.
   Future<void> deleteCustomer(String id) async {
