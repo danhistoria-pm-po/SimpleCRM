@@ -9,6 +9,7 @@ import 'package:simple_crm/features/follow_up/views/follow_up_view.dart';
 import 'package:simple_crm/home_page.dart';
 import 'package:simple_crm/main.dart';
 import 'package:simple_crm/modules/auth/controllers/auth_controller.dart';
+import 'package:simple_crm/modules/auth/pages/register_page.dart';
 import 'package:simple_crm/modules/customers/domain/entities/customer_entity.dart';
 import 'package:simple_crm/modules/customers/presentation/customer_controller.dart';
 import 'package:simple_crm/modules/customers/presentation/customer_form_modal.dart';
@@ -65,6 +66,8 @@ class _InMemoryFollowUpRepository extends FollowUpRepository {
 
 class _FakeAuthController extends ChangeNotifier implements AuthController {
   int logoutCallCount = 0;
+  int registerCallCount = 0;
+  String? lastRegisteredEmail;
 
   @override
   bool get isLoading => false;
@@ -79,7 +82,11 @@ class _FakeAuthController extends ChangeNotifier implements AuthController {
   Future<bool> login(String email, String password) async => true;
 
   @override
-  Future<bool> register(String email, String password) async => true;
+  Future<bool> register(String email, String password) async {
+    registerCallCount++;
+    lastRegisteredEmail = email;
+    return true;
+  }
 
   @override
   Future<void> logout() async {
@@ -561,5 +568,55 @@ void main() {
     expect(find.byIcon(Icons.star), findsNWidgets(4));
     expect(find.byIcon(Icons.star_border), findsNWidgets(1));
     expect(followUpController.followUps.first.satisfactionScore, 4);
+  });
+
+  testWidgets('Micro-Sprint 4.5: RegisterPage exige consentimento LGPD, exibe modal de termos e permite cadastro apos aceite', (
+    WidgetTester tester,
+  ) async {
+    final fakeAuth = _FakeAuthController();
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: RegisterPage(authController: fakeAuth),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // Preencher e-mail e senha válidos sem marcar o checkbox LGPD
+    await tester.enterText(
+      find.widgetWithText(TextFormField, 'E-mail'),
+      'novo@empresa.com',
+    );
+    await tester.enterText(
+      find.widgetWithText(TextFormField, 'Senha'),
+      'senha123',
+    );
+    await tester.tap(find.text('Cadastrar Conta'));
+    await tester.pumpAndSettle();
+
+    // Não deve chamar register sem o aceite LGPD
+    expect(fakeAuth.registerCallCount, 0);
+    expect(
+      find.text(
+        'Você deve aceitar os Termos de Uso e a Política de Privacidade (LGPD) para criar a conta.',
+      ),
+      findsOneWidget,
+    );
+
+    // Abrir modal de leitura rápida dos Termos e Política (LGPD) e clicar em 'Li e Aceito'
+    await tester.tap(find.text('Ler Termos e Política (LGPD)'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Termos de Uso e Privacidade (LGPD)'), findsOneWidget);
+    await tester.tap(find.text('Li e Aceito'));
+    await tester.pumpAndSettle();
+
+    // Agora o checkbox está marcado; clicar em 'Cadastrar Conta' realiza o cadastro
+    expect(tester.widget<Checkbox>(find.byType(Checkbox)).value, isTrue);
+    await tester.tap(find.text('Cadastrar Conta'));
+    await tester.pumpAndSettle();
+
+    expect(fakeAuth.registerCallCount, 1);
+    expect(fakeAuth.lastRegisteredEmail, 'novo@empresa.com');
   });
 }

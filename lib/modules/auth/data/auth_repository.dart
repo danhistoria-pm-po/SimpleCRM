@@ -2,7 +2,11 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class AuthRepository {
-  final SupabaseClient _supabase = Supabase.instance.client;
+  final SupabaseClient? client;
+
+  AuthRepository({this.client});
+
+  SupabaseClient get _supabase => client ?? Supabase.instance.client;
 
   User? get currentUser => _supabase.auth.currentUser;
 
@@ -30,11 +34,16 @@ class AuthRepository {
   Future<AuthResponse> signUp({
     required String email,
     required String password,
+    bool lgpdConsent = true,
   }) async {
     try {
       final response = await _supabase.auth.signUp(
         email: email.trim(),
         password: password,
+        data: {
+          'lgpd_consent': lgpdConsent,
+          'lgpd_consent_at': DateTime.now().toUtc().toIso8601String(),
+        },
       );
       return response;
     } on AuthException catch (e) {
