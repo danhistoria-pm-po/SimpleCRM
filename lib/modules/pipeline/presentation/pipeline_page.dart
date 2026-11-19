@@ -30,6 +30,7 @@ class _PipelinePageState extends State<PipelinePage> {
   late final bool _ownsController;
   final ScrollController _horizontalScrollController = ScrollController();
   final TextEditingController _searchController = TextEditingController();
+  String? _lastLoadedNiche;
 
   @override
   void initState() {
@@ -40,6 +41,18 @@ class _PipelinePageState extends State<PipelinePage> {
     _controller.addListener(_onControllerChanged);
     _customerController.ensureLoaded();
     _loadDealsComTratamentoDeErro();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final currentNiche = NicheScope.of(context).key;
+    if (_lastLoadedNiche != null && _lastLoadedNiche != currentNiche) {
+      _lastLoadedNiche = currentNiche;
+      _loadDealsComTratamentoDeErro();
+    } else {
+      _lastLoadedNiche ??= currentNiche;
+    }
   }
 
   void _onControllerChanged() {

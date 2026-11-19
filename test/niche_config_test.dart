@@ -7,9 +7,9 @@ import 'package:simple_crm/models/user_profile.dart';
 import 'package:simple_crm/modules/pipeline/models/deal_entity.dart';
 
 void main() {
-  group('Sprint 3 — Motor Camaleão (NicheConfig)', () {
-    test('mapeia corretamente os 4 nichos oficiais da suite Prisma Gestao', () {
-      expect(NicheConfig.all.length, 4);
+  group('Sprint 3 & 5 — Motor Camaleão (NicheConfig)', () {
+    test('mapeia corretamente os 5 nichos oficiais da suite Prisma Gestao', () {
+      expect(NicheConfig.all.length, 5);
 
       // 1. SimpleCRM
       final simplecrm = NicheConfig.fromKey('simplecrm');
@@ -90,6 +90,35 @@ void main() {
       expect(imobiliaria.dealSingular, 'Proposta');
       expect(imobiliaria.invoiceSingular, 'Comissão / Contrato');
       expect(imobiliaria.stageLabel(DealStage.activeClient), 'Contrato Fechado');
+
+      // 5. Curso
+      expect(PrismaNiche.fromString('curso'), PrismaNiche.curso);
+      final curso = NicheConfig.fromKey('curso');
+      expect(curso.niche, PrismaNiche.curso);
+      expect(curso.id, 'curso');
+      expect(curso.productName, 'Prisma Gestão | Curso');
+      expect(curso.shortName, 'Curso');
+      expect(curso.primaryColor, const Color(0xFF4F46E5));
+      expect(curso.priceLabel, 'R\$ 97,00/mês');
+      expect(curso.planTier, 'especializado_97');
+      expect(curso.icon, Icons.school_rounded);
+      expect(curso.pipelineTabLabel, 'Matrículas');
+      expect(curso.customersTabLabel, 'Alunos');
+      expect(curso.billingTabLabel, 'Mensalidades');
+      expect(curso.cashFlowTabLabel, 'Caixa');
+      expect(curso.followUpTabLabel, 'Renovação & Retenção');
+      expect(curso.customerSingular, 'Aluno');
+      expect(curso.newCustomerLabel, 'Novo Aluno');
+      expect(curso.dealSingular, 'Matrícula');
+      expect(curso.dealTitleFieldLabel, 'Curso / Turma / Matrícula');
+      expect(curso.invoiceSingular, 'Mensalidade / Fatura');
+      expect(curso.newInvoiceLabel, 'Nova Mensalidade');
+      expect(curso.primaryActionLabel, '+ Nova Matrícula');
+      expect(curso.stageLabel(DealStage.potential), 'Interessado');
+      expect(curso.stageLabel(DealStage.inNegotiation), 'Aula / Avaliação');
+      expect(curso.stageLabel(DealStage.proposalSent), 'Proposta / Plano');
+      expect(curso.stageLabel(DealStage.activeClient), 'Matriculado');
+      expect(curso.stageLabel(DealStage.lost), 'Desistente');
     });
 
     test('fallback seguro para simplecrm e integracao com UserProfile e AppTheme.forNiche', () {
@@ -118,6 +147,14 @@ void main() {
       expect(profile.nicheConfig.niche, PrismaNiche.vetPet);
       expect(profile.isComercioPlan, isFalse);
       expect(profile.hasActiveAccess, isTrue);
+
+      // Valida ActiveNicheContext para isolamento de dados por nicho
+      ActiveNicheContext.set('curso');
+      expect(ActiveNicheContext.current, 'curso');
+      ActiveNicheContext.set('clinica');
+      expect(ActiveNicheContext.current, 'clinica');
+      ActiveNicheContext.reset();
+      expect(ActiveNicheContext.current, 'simplecrm');
     });
   });
 }

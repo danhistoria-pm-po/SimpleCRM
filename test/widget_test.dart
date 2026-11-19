@@ -33,7 +33,8 @@ class _InMemoryCustomerRepository extends CustomerRepository {
   _InMemoryCustomerRepository(this.initial);
 
   @override
-  Future<List<Customer>> getCustomers() async => List<Customer>.from(initial);
+  Future<List<Customer>> getCustomers({String? niche}) async =>
+      List<Customer>.from(initial);
 
   @override
   Future<void> updateCustomer(Customer customer) async {
@@ -49,7 +50,7 @@ class _InMemoryPipelineRepository extends PipelineRepository {
   _InMemoryPipelineRepository(this.initial);
 
   @override
-  Future<List<DealEntity>> fetchDeals() async => initial;
+  Future<List<DealEntity>> fetchDeals({String? niche}) async => initial;
 }
 
 class _InMemoryFollowUpRepository extends FollowUpRepository {
@@ -57,7 +58,7 @@ class _InMemoryFollowUpRepository extends FollowUpRepository {
   _InMemoryFollowUpRepository(this.initial);
 
   @override
-  Future<List<FollowUpModel>> getFollowUps() async =>
+  Future<List<FollowUpModel>> getFollowUps({String? niche}) async =>
       List<FollowUpModel>.from(initial);
 
   @override
@@ -73,6 +74,7 @@ class _FakeAuthController extends ChangeNotifier implements AuthController {
   int logoutCallCount = 0;
   int registerCallCount = 0;
   String? lastRegisteredEmail;
+  String? lastRegisteredNiche;
 
   @override
   bool get isLoading => false;
@@ -87,9 +89,14 @@ class _FakeAuthController extends ChangeNotifier implements AuthController {
   Future<bool> login(String email, String password) async => true;
 
   @override
-  Future<bool> register(String email, String password) async {
+  Future<bool> register(
+    String email,
+    String password, {
+    String niche = 'simplecrm',
+  }) async {
     registerCallCount++;
     lastRegisteredEmail = email;
+    lastRegisteredNiche = niche;
     return true;
   }
 
@@ -624,6 +631,7 @@ void main() {
       find.widgetWithText(TextFormField, 'Senha'),
       'senha123',
     );
+    await tester.ensureVisible(find.text('Cadastrar Conta'));
     await tester.tap(find.text('Cadastrar Conta'));
     await tester.pumpAndSettle();
 
@@ -646,11 +654,13 @@ void main() {
 
     // Agora o checkbox está marcado; clicar em 'Cadastrar Conta' realiza o cadastro
     expect(tester.widget<Checkbox>(find.byType(Checkbox)).value, isTrue);
+    await tester.ensureVisible(find.text('Cadastrar Conta'));
     await tester.tap(find.text('Cadastrar Conta'));
     await tester.pumpAndSettle();
 
     expect(fakeAuth.registerCallCount, 1);
     expect(fakeAuth.lastRegisteredEmail, 'novo@empresa.com');
+    expect(fakeAuth.lastRegisteredNiche, 'simplecrm');
   });
 
   testWidgets('Tutorial de Imersao: exibe botao Assistir Video Tutorial e abre modal responsivo com link do Google Drive', (

@@ -1,5 +1,6 @@
 // lib/modules/customers/repositories/customer_repository.dart
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../../config/niche_config.dart';
 import '../domain/entities/customer_entity.dart';
 
 class CustomerRepository {
@@ -9,12 +10,14 @@ class CustomerRepository {
 
   SupabaseClient get _supabase => client ?? Supabase.instance.client;
 
-  // Buscar todos os clientes ordenados deterministicamente por nome
-  Future<List<Customer>> getCustomers() async {
+  // Buscar todos os clientes do nicho ativo ordenados deterministicamente por nome
+  Future<List<Customer>> getCustomers({String? niche}) async {
+    final activeNiche = niche ?? ActiveNicheContext.current;
     try {
       final response = await _supabase
           .from('customers')
           .select()
+          .eq('niche', activeNiche)
           .order('name', ascending: true);
 
       return (response as List).map((data) {
@@ -39,8 +42,9 @@ class CustomerRepository {
     }
   }
 
-  // Inserir um novo cliente na tabela 'customers'
-  Future<void> addCustomer(Customer customer) async {
+  // Inserir um novo cliente na tabela 'customers' vinculado ao nicho ativo
+  Future<void> addCustomer(Customer customer, {String? niche}) async {
+    final activeNiche = niche ?? ActiveNicheContext.current;
     try {
       await _supabase.from('customers').insert({
         'name': customer.name,
@@ -48,6 +52,7 @@ class CustomerRepository {
         'email': customer.email,
         'address': customer.address,
         'notes': customer.notes,
+        'niche': activeNiche,
       });
     } catch (e) {
       rethrow;

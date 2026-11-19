@@ -3,8 +3,12 @@ import 'package:flutter/material.dart';
 import '../config/niche_config.dart';
 import '../core/theme/app_colors.dart';
 import '../core/theme/app_theme.dart';
+import '../features/follow_up/controllers/follow_up_controller.dart';
 import '../home_page.dart';
 import '../models/user_profile.dart';
+import '../modules/billing/controllers/billing_controller.dart';
+import '../modules/cash_flow/controllers/cash_flow_controller.dart';
+import '../modules/customers/presentation/customer_controller.dart';
 import '../screens/trial_and_paywall_screen.dart';
 import '../services/subscription_service.dart';
 import 'niche_scope.dart';
@@ -47,11 +51,26 @@ class _AccessGateState extends State<AccessGate> {
     final fetched = await _subscriptionService.fetchCurrentProfile();
     if (!mounted) return;
 
+    final resolved = fetched ??
+        UserProfile.fallback(id: widget.userId, email: widget.userEmail);
+    ActiveNicheContext.set(resolved.niche);
+
     setState(() {
-      _profile = fetched ??
-          UserProfile.fallback(id: widget.userId, email: widget.userEmail);
+      _profile = resolved;
       _isLoading = false;
     });
+  }
+
+  void _reloadSharedModuleControllers() {
+    CustomerController().reset();
+    BillingController().reset();
+    CashFlowController().reset();
+    FollowUpController().reset();
+
+    CustomerController().loadCustomers();
+    BillingController().loadInvoices();
+    CashFlowController().loadEntries();
+    FollowUpController().loadFollowUps();
   }
 
   Future<void> _handleSwitchNiche(PrismaNiche newNiche) async {
@@ -59,21 +78,25 @@ class _AccessGateState extends State<AccessGate> {
         UserProfile.fallback(id: widget.userId, email: widget.userEmail);
     final newConfig = NicheConfig.fromNiche(newNiche);
 
-    // Atualização otimista imediata da interface
+    // Atualiza o nicho ativo e recarrega todos os módulos sem vazar dados do nicho anterior
+    ActiveNicheContext.set(newConfig.key);
     setState(() {
       _profile = current.copyWith(
         niche: newConfig.key,
         planTier: newConfig.planTier,
       );
     });
+    _reloadSharedModuleControllers();
 
     try {
       await _subscriptionService.updateNiche(newConfig.key);
     } catch (e) {
       if (!mounted) return;
+      ActiveNicheContext.set(current.niche);
       setState(() {
         _profile = current;
       });
+      _reloadSharedModuleControllers();
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(

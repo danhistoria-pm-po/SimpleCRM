@@ -1,5 +1,6 @@
 // lib/modules/billing/repositories/billing_repository.dart
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../../config/niche_config.dart';
 import '../models/invoice_entity.dart';
 
 class BillingRepository {
@@ -9,12 +10,14 @@ class BillingRepository {
 
   SupabaseClient get _supabase => client ?? Supabase.instance.client;
 
-  // Buscar todas as faturas do Supabase ordenadas por vencimento (due_date)
-  Future<List<InvoiceEntity>> fetchInvoices() async {
+  // Buscar todas as faturas do nicho ativo ordenadas por vencimento (due_date)
+  Future<List<InvoiceEntity>> fetchInvoices({String? niche}) async {
+    final activeNiche = niche ?? ActiveNicheContext.current;
     try {
       final response = await _supabase
           .from('invoices')
           .select()
+          .eq('niche', activeNiche)
           .order('due_date', ascending: true);
 
       return (response as List).map((json) {
@@ -37,8 +40,9 @@ class BillingRepository {
     }
   }
 
-  // Inserir uma nova fatura (datas salvas em UTC)
-  Future<void> createInvoice(InvoiceEntity invoice) async {
+  // Inserir uma nova fatura vinculada ao nicho ativo (datas salvas em UTC)
+  Future<void> createInvoice(InvoiceEntity invoice, {String? niche}) async {
+    final activeNiche = niche ?? ActiveNicheContext.current;
     try {
       await _supabase.from('invoices').insert({
         'customer_id': invoice.customerId,
@@ -46,6 +50,7 @@ class BillingRepository {
         'value': invoice.amount,
         'due_date': invoice.dueDate.toUtc().toIso8601String(),
         'status': invoice.status.name,
+        'niche': activeNiche,
       });
     } catch (e) {
       rethrow;

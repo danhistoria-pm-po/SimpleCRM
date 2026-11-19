@@ -2,11 +2,30 @@
 import 'package:flutter/material.dart';
 import '../modules/pipeline/models/deal_entity.dart';
 
+/// Mantém o nicho ativo da sessão atual para isolamento de consultas e gravações
+/// nas tabelas de negócio (`customers`, `deals`, `invoices`, `cash_flow`, `follow_ups`).
+class ActiveNicheContext {
+  ActiveNicheContext._();
+
+  static String _current = PrismaNiche.simplecrm.key;
+
+  static String get current => _current;
+
+  static void set(String? niche) {
+    _current = PrismaNiche.fromKey(niche).key;
+  }
+
+  static void reset() {
+    _current = PrismaNiche.simplecrm.key;
+  }
+}
+
 enum PrismaNiche {
   simplecrm('simplecrm'),
   clinica('clinica'),
   vetPet('vet_pet'),
-  imobiliaria('imobiliaria');
+  imobiliaria('imobiliaria'),
+  curso('curso');
 
   final String key;
   const PrismaNiche(this.key);
@@ -19,11 +38,15 @@ enum PrismaNiche {
         return PrismaNiche.vetPet;
       case 'imobiliaria':
         return PrismaNiche.imobiliaria;
+      case 'curso':
+        return PrismaNiche.curso;
       case 'simplecrm':
       default:
         return PrismaNiche.simplecrm;
     }
   }
+
+  static PrismaNiche fromString(String? value) => fromKey(value);
 }
 
 class NicheConfig {
@@ -52,6 +75,7 @@ class NicheConfig {
   final String newCustomerLabel;
   final String dealSingular;
   final String invoiceSingular;
+  final String newInvoiceLabel;
   final String dealTitleFieldLabel;
 
   // Rótulos das etapas do Kanban (mantendo os mesmos valores internos de DealStage no Supabase)
@@ -79,11 +103,16 @@ class NicheConfig {
     required this.newCustomerLabel,
     required this.dealSingular,
     required this.invoiceSingular,
+    required this.newInvoiceLabel,
     required this.dealTitleFieldLabel,
     required this.stageLabels,
   });
 
   String get key => niche.key;
+  String get id => niche.key;
+  String get productName => appName;
+  String get priceLabel => monthlyPriceLabel;
+  String get primaryActionLabel => '+ $newDealButtonLabel';
 
   bool get isComercioPlan => planTier == 'comercio_49';
 
@@ -111,6 +140,7 @@ class NicheConfig {
     newCustomerLabel: 'Novo Cliente',
     dealSingular: 'Oportunidade',
     invoiceSingular: 'Fatura',
+    newInvoiceLabel: 'Nova Fatura',
     dealTitleFieldLabel: 'Título da Oportunidade',
     stageLabels: {
       DealStage.potential: 'Potencial',
@@ -143,6 +173,7 @@ class NicheConfig {
     newCustomerLabel: 'Novo Paciente',
     dealSingular: 'Orçamento / Tratamento',
     invoiceSingular: 'Recibo / Fatura',
+    newInvoiceLabel: 'Novo Recibo / Fatura',
     dealTitleFieldLabel: 'Título do Orçamento / Tratamento',
     stageLabels: {
       DealStage.potential: 'Triagem / Contato',
@@ -175,6 +206,7 @@ class NicheConfig {
     newCustomerLabel: 'Novo Pet / Tutor',
     dealSingular: 'Atendimento',
     invoiceSingular: 'Fatura / Atendimento',
+    newInvoiceLabel: 'Nova Fatura / Atendimento',
     dealTitleFieldLabel: 'Título do Atendimento',
     stageLabels: {
       DealStage.potential: 'Novo Contato',
@@ -207,6 +239,7 @@ class NicheConfig {
     newCustomerLabel: 'Novo Interessado',
     dealSingular: 'Proposta',
     invoiceSingular: 'Comissão / Contrato',
+    newInvoiceLabel: 'Nova Comissão / Contrato',
     dealTitleFieldLabel: 'Título da Proposta',
     stageLabels: {
       DealStage.potential: 'Novo Lead',
@@ -217,11 +250,45 @@ class NicheConfig {
     },
   );
 
+  static const NicheConfig curso = NicheConfig(
+    niche: PrismaNiche.curso,
+    shortName: 'Curso',
+    appName: 'Prisma Gestão | Curso',
+    primaryColor: Color(0xFF4F46E5),
+    primaryDarkColor: Color(0xFF3730A3),
+    primaryLightColor: Color(0xFFE0E7FF),
+    planTier: 'especializado_97',
+    monthlyPriceLabel: 'R\$ 97,00/mês',
+    planSubtitle: 'Plano Profissional — Prisma Gestão | Curso',
+    icon: Icons.school_rounded,
+    pipelineTabLabel: 'Matrículas',
+    pipelineEntityPlural: 'Matrículas',
+    customersTabLabel: 'Alunos',
+    billingTabLabel: 'Mensalidades',
+    cashFlowTabLabel: 'Caixa',
+    followUpTabLabel: 'Renovação & Retenção',
+    newDealButtonLabel: 'Nova Matrícula',
+    customerSingular: 'Aluno',
+    newCustomerLabel: 'Novo Aluno',
+    dealSingular: 'Matrícula',
+    invoiceSingular: 'Mensalidade / Fatura',
+    newInvoiceLabel: 'Nova Mensalidade',
+    dealTitleFieldLabel: 'Curso / Turma / Matrícula',
+    stageLabels: {
+      DealStage.potential: 'Interessado',
+      DealStage.inNegotiation: 'Aula / Avaliação',
+      DealStage.proposalSent: 'Proposta / Plano',
+      DealStage.activeClient: 'Matriculado',
+      DealStage.lost: 'Desistente',
+    },
+  );
+
   static const List<NicheConfig> all = [
     simplecrm,
     clinica,
     vetPet,
     imobiliaria,
+    curso,
   ];
 
   static NicheConfig fromNiche(PrismaNiche niche) {
@@ -232,6 +299,8 @@ class NicheConfig {
         return vetPet;
       case PrismaNiche.imobiliaria:
         return imobiliaria;
+      case PrismaNiche.curso:
+        return curso;
       case PrismaNiche.simplecrm:
         return simplecrm;
     }

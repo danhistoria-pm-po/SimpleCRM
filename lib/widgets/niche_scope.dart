@@ -63,7 +63,7 @@ class NicheSwitcherAction extends StatelessWidget {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
-                      item.shortName,
+                      item.appName,
                       style: TextStyle(
                         fontWeight:
                             isSelected ? FontWeight.bold : FontWeight.w500,

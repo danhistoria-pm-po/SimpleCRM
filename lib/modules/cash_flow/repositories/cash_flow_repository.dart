@@ -1,5 +1,6 @@
 // lib/modules/cash_flow/repositories/cash_flow_repository.dart
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../../config/niche_config.dart';
 import '../models/cash_flow_entry_entity.dart';
 
 class CashFlowRepository {
@@ -9,11 +10,13 @@ class CashFlowRepository {
 
   SupabaseClient get _supabase => client ?? Supabase.instance.client;
 
-  Future<List<CashFlowEntryEntity>> fetchEntries() async {
+  Future<List<CashFlowEntryEntity>> fetchEntries({String? niche}) async {
+    final activeNiche = niche ?? ActiveNicheContext.current;
     try {
       final response = await _supabase
           .from('cash_flow')
           .select()
+          .eq('niche', activeNiche)
           .order('date', ascending: false);
 
       return (response as List).map((json) {
@@ -34,13 +37,15 @@ class CashFlowRepository {
     }
   }
 
-  Future<void> createEntry(CashFlowEntryEntity entry) async {
+  Future<void> createEntry(CashFlowEntryEntity entry, {String? niche}) async {
+    final activeNiche = niche ?? ActiveNicheContext.current;
     try {
       await _supabase.from('cash_flow').insert({
         'description': entry.description,
         'value': entry.amount,
         'type': entry.type.name,
         'date': entry.date.toUtc().toIso8601String(),
+        'niche': activeNiche,
       });
     } catch (e) {
       rethrow;

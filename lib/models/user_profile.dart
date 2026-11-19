@@ -7,6 +7,7 @@ class UserProfile {
     'clinica',
     'vet_pet',
     'imobiliaria',
+    'curso',
   ];
 
   final String id;

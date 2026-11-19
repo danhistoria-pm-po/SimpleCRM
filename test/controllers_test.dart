@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:simple_crm/config/niche_config.dart';
 import 'package:simple_crm/modules/billing/controllers/billing_controller.dart';
 import 'package:simple_crm/modules/billing/models/invoice_entity.dart';
 import 'package:simple_crm/modules/billing/repositories/billing_repository.dart';
@@ -23,16 +24,18 @@ import 'package:simple_crm/modules/customers/repositories/customer_repository.da
 class FakeBillingRepository extends BillingRepository {
   List<InvoiceEntity> store = [];
   bool shouldFail = false;
+  String? lastInsertedNiche;
 
   @override
-  Future<List<InvoiceEntity>> fetchInvoices() async {
+  Future<List<InvoiceEntity>> fetchInvoices({String? niche}) async {
     if (shouldFail) throw Exception('Falha simulada no BillingRepository');
     return List<InvoiceEntity>.from(store);
   }
 
   @override
-  Future<void> createInvoice(InvoiceEntity invoice) async {
+  Future<void> createInvoice(InvoiceEntity invoice, {String? niche}) async {
     if (shouldFail) throw Exception('Falha ao criar fatura');
+    lastInsertedNiche = niche ?? ActiveNicheContext.current;
     store.add(invoice.copyWith(id: 'inv-${store.length + 1}'));
   }
 
@@ -55,16 +58,18 @@ class FakeBillingRepository extends BillingRepository {
 class FakeCashFlowRepository extends CashFlowRepository {
   List<CashFlowEntryEntity> store = [];
   bool shouldFail = false;
+  String? lastInsertedNiche;
 
   @override
-  Future<List<CashFlowEntryEntity>> fetchEntries() async {
+  Future<List<CashFlowEntryEntity>> fetchEntries({String? niche}) async {
     if (shouldFail) throw Exception('Falha simulada no CashFlowRepository');
     return List<CashFlowEntryEntity>.from(store);
   }
 
   @override
-  Future<void> createEntry(CashFlowEntryEntity entry) async {
+  Future<void> createEntry(CashFlowEntryEntity entry, {String? niche}) async {
     if (shouldFail) throw Exception('Falha ao criar lancamento');
+    lastInsertedNiche = niche ?? ActiveNicheContext.current;
     store.add(entry.copyWith(id: 'cf-${store.length + 1}'));
   }
 
@@ -78,16 +83,18 @@ class FakeCashFlowRepository extends CashFlowRepository {
 class FakeFollowUpRepository extends FollowUpRepository {
   List<FollowUpModel> store = [];
   bool shouldFail = false;
+  String? lastInsertedNiche;
 
   @override
-  Future<List<FollowUpModel>> getFollowUps() async {
+  Future<List<FollowUpModel>> getFollowUps({String? niche}) async {
     if (shouldFail) throw Exception('Falha simulada no FollowUpRepository');
     return List<FollowUpModel>.from(store);
   }
 
   @override
-  Future<void> addFollowUp(FollowUpModel followUp) async {
+  Future<void> addFollowUp(FollowUpModel followUp, {String? niche}) async {
     if (shouldFail) throw Exception('Falha ao criar follow-up');
+    lastInsertedNiche = niche ?? ActiveNicheContext.current;
     store.add(followUp.copyWith(id: 'fu-${store.length + 1}'));
   }
 
@@ -112,13 +119,13 @@ class FakePipelineRepository extends PipelineRepository {
   bool shouldFail = false;
 
   @override
-  Future<List<DealEntity>> fetchDeals() async {
+  Future<List<DealEntity>> fetchDeals({String? niche}) async {
     if (shouldFail) throw Exception('Falha de rede no PipelineRepository');
     return List<DealEntity>.from(store);
   }
 
   @override
-  Future<void> createDeal(DealEntity deal) async {
+  Future<void> createDeal(DealEntity deal, {String? niche}) async {
     if (shouldFail) throw Exception('Falha ao criar deal');
     store.add(deal.copyWith(id: 'deal-${store.length + 1}'));
   }
@@ -146,7 +153,7 @@ class FakeCustomerRepository extends CustomerRepository {
   Completer<List<Customer>>? pendingFetchCompleter;
 
   @override
-  Future<List<Customer>> getCustomers() async {
+  Future<List<Customer>> getCustomers({String? niche}) async {
     if (pendingFetchCompleter != null) {
       return pendingFetchCompleter!.future;
     }
@@ -155,7 +162,7 @@ class FakeCustomerRepository extends CustomerRepository {
   }
 
   @override
-  Future<void> addCustomer(Customer customer) async {
+  Future<void> addCustomer(Customer customer, {String? niche}) async {
     if (shouldFail) throw Exception('Falha ao adicionar cliente');
     store.add(customer.copyWith(id: 'cust-${store.length + 1}'));
   }
@@ -421,13 +428,19 @@ void main() {
       await pipelineController.loadDeals();
       expect(pipelineController.deals.first.stage, DealStage.proposalSent);
 
-      // Mover para Cliente Ativo dispara a automação nos 3 módulos
+      // Mover para Cliente Ativo dispara a automação nos 3 módulos mantendo o nicho ativo
+      ActiveNicheContext.set('curso');
+      addTearDown(ActiveNicheContext.reset);
+
       final ok = await pipelineController.updateDealStage(
         '11111111-1111-1111-1111-111111111111',
         DealStage.activeClient,
       );
       expect(ok, isTrue);
       expect(pipelineController.deals.first.stage, DealStage.activeClient);
+      expect(billingRepo.lastInsertedNiche, 'curso');
+      expect(cashFlowRepo.lastInsertedNiche, 'curso');
+      expect(followUpRepo.lastInsertedNiche, 'curso');
 
       // 1. Faturamento atualizado automaticamente
       expect(billingController.invoices.length, 1);

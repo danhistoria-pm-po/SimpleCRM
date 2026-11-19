@@ -31,13 +31,21 @@ class AuthController extends ChangeNotifier {
   }
 
   // Ação de Registo
-  Future<bool> register(String email, String password) async {
+  Future<bool> register(
+    String email,
+    String password, {
+    String niche = 'simplecrm',
+  }) async {
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
 
     try {
-      await _authRepository.signUp(email: email, password: password);
+      await _authRepository.signUp(
+        email: email,
+        password: password,
+        niche: niche,
+      );
       _isLoading = false;
       notifyListeners();
       return true; // Sucesso

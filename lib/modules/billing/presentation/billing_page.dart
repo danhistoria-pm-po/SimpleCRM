@@ -1,7 +1,6 @@
 // lib/modules/billing/presentation/billing_page.dart
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import '../../../config/niche_config.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../core/widgets/logout_action.dart';
@@ -346,12 +345,8 @@ class _BillingPageState extends State<BillingPage> {
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _showAddInvoiceModal,
-        icon: const Icon(Icons.post_add),
-        label: Text(
-          nicheConfig.niche == PrismaNiche.simplecrm
-              ? 'Nova Fatura'
-              : 'Novo ${nicheConfig.invoiceSingular}',
-        ),
+        icon: const Icon(Icons.add),
+        label: Text(nicheConfig.newInvoiceLabel),
       ),
     );
   }
@@ -435,11 +430,7 @@ class _InvoiceFormDialogState extends State<_InvoiceFormDialog> {
     final nicheConfig = NicheScope.of(context);
     return AlertDialog(
       insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
-      title: Text(
-        nicheConfig.niche == PrismaNiche.simplecrm
-            ? 'Nova Fatura'
-            : 'Novo ${nicheConfig.invoiceSingular}',
-      ),
+      title: Text(nicheConfig.newInvoiceLabel),
       content: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 480),
         child: SingleChildScrollView(
