@@ -1,4 +1,5 @@
 // lib/models/user_profile.dart
+import '../config/niche_config.dart';
 
 class UserProfile {
   static const List<String> supportedNiches = [
@@ -6,6 +7,7 @@ class UserProfile {
     'clinica',
     'vet_pet',
     'imobiliaria',
+    'curso',
   ];
 
   final String id;
@@ -110,6 +112,9 @@ class UserProfile {
 
   /// Identifica se o perfil pertence ao plano Comércio (R$ 49,00/mês).
   bool get isComercioPlan => niche == 'simplecrm' && planTier == 'comercio_49';
+
+  /// Retorna a configuração visual e terminológica do nicho ativo.
+  NicheConfig get nicheConfig => NicheConfig.fromKey(niche);
 
   UserProfile copyWith({
     String? id,

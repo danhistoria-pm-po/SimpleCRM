@@ -4,6 +4,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../core/widgets/logout_action.dart';
 import '../../../core/widgets/tutorial_help_action.dart';
+import '../../../widgets/niche_scope.dart';
 import '../controllers/cash_flow_controller.dart';
 import '../models/cash_flow_entry_entity.dart';
 
@@ -75,9 +76,10 @@ class _CashFlowPageState extends State<CashFlowPage> {
 
   @override
   Widget build(BuildContext context) {
+    final nicheConfig = NicheScope.configOf(context);
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Fluxo de Caixa Simples'),
+        title: Text('${nicheConfig.shortName} - ${nicheConfig.cashFlowTabLabel}'),
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
@@ -94,6 +96,7 @@ class _CashFlowPageState extends State<CashFlowPage> {
             },
             tooltip: 'Atualizar',
           ),
+          const NicheSwitcherAction(),
           const TutorialHelpAction(),
           const LogoutAction(),
         ],

@@ -1,5 +1,6 @@
 // lib/modules/pipeline/repositories/pipeline_repository.dart
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../../config/niche_config.dart';
 import '../models/deal_entity.dart';
 
 class PipelineRepository {
@@ -9,12 +10,14 @@ class PipelineRepository {
 
   SupabaseClient get _supabase => client ?? Supabase.instance.client;
 
-  // Buscar todas as oportunidades da tabela 'deals' ordenadas por created_at desc
-  Future<List<DealEntity>> fetchDeals() async {
+  // Buscar todas as oportunidades do nicho ativo da tabela 'deals' ordenadas por created_at desc
+  Future<List<DealEntity>> fetchDeals({String? niche}) async {
+    final activeNiche = niche ?? ActiveNicheContext.current;
     try {
       final response = await _supabase
           .from('deals')
           .select()
+          .eq('niche', activeNiche)
           .order('created_at', ascending: false);
 
       return (response as List).map((data) {
@@ -42,8 +45,9 @@ class PipelineRepository {
     }
   }
 
-  // Criar uma nova oportunidade na tabela 'deals'
-  Future<void> createDeal(DealEntity deal) async {
+  // Criar uma nova oportunidade na tabela 'deals' vinculada ao nicho ativo
+  Future<void> createDeal(DealEntity deal, {String? niche}) async {
+    final activeNiche = niche ?? ActiveNicheContext.current;
     try {
       await _supabase.from('deals').insert({
         'title': deal.title,
@@ -51,6 +55,7 @@ class PipelineRepository {
         'customer_name': deal.customerName,
         'value': deal.value,
         'stage': deal.stage.name,
+        'niche': activeNiche,
       });
     } catch (e) {
       rethrow;

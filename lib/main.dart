@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'config/niche_config.dart';
 import 'core/theme/app_theme.dart';
 import 'features/follow_up/controllers/follow_up_controller.dart';
 import 'modules/auth/pages/login_page.dart';
@@ -29,7 +30,7 @@ class SimpleCRMApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'SimpleCRM — Produtividade PME',
+      title: 'Prisma Gestão — Gestão Simples e Direta ao Ponto',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
       locale: const Locale('pt', 'BR'),
@@ -79,6 +80,7 @@ class _AuthCheckPageState extends State<AuthCheckPage> {
       final AuthChangeEvent event = data.event;
 
       if (event == AuthChangeEvent.signedOut) {
+        ActiveNicheContext.reset();
         CustomerController().reset();
         BillingController().reset();
         CashFlowController().reset();

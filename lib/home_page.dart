@@ -9,6 +9,7 @@ import 'modules/cash_flow/presentation/cash_flow_page.dart';
 import 'features/follow_up/views/follow_up_view.dart';
 import 'screens/trial_and_paywall_screen.dart';
 import 'services/subscription_service.dart';
+import 'widgets/niche_scope.dart';
 
 class HomePage extends StatefulWidget {
   final UserProfile? profile;
@@ -60,6 +61,7 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     final profile = widget.profile;
+    final nicheConfig = profile?.nicheConfig ?? NicheScope.configOf(context);
     final showTrialBanner = profile != null &&
         !profile.isSubscribed &&
         profile.remainingTrialDays > 0;
@@ -70,7 +72,7 @@ class _HomePageState extends State<HomePage> {
         children: [
           if (showTrialBanner)
             Material(
-              color: const Color(0xFF1E3A8A),
+              color: nicheConfig.primaryDarkColor,
               child: SafeArea(
                 bottom: false,
                 child: Padding(
@@ -101,7 +103,7 @@ class _HomePageState extends State<HomePage> {
                         onPressed: _openSubscriptionScreen,
                         style: TextButton.styleFrom(
                           foregroundColor: AppColors.surface,
-                          backgroundColor: const Color(0xFF2563EB),
+                          backgroundColor: nicheConfig.primaryColor,
                           padding: const EdgeInsets.symmetric(
                             horizontal: 12,
                             vertical: 4,
@@ -141,28 +143,28 @@ class _HomePageState extends State<HomePage> {
           });
         },
         type: BottomNavigationBarType.fixed,
-        selectedItemColor: AppColors.primary,
+        selectedItemColor: nicheConfig.primaryColor,
         unselectedItemColor: AppColors.textSecondary,
-        items: const [
+        items: [
           BottomNavigationBarItem(
-            icon: Icon(Icons.bar_chart),
-            label: 'Pipeline',
+            icon: const Icon(Icons.bar_chart),
+            label: nicheConfig.pipelineTabLabel,
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.people),
-            label: 'Clientes',
+            icon: const Icon(Icons.people),
+            label: nicheConfig.customersTabLabel,
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.receipt_long),
-            label: 'Faturamento',
+            icon: const Icon(Icons.receipt_long),
+            label: nicheConfig.billingTabLabel,
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.account_balance_wallet),
-            label: 'Caixa',
+            icon: const Icon(Icons.account_balance_wallet),
+            label: nicheConfig.cashFlowTabLabel,
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.rate_review),
-            label: 'Pós-Venda',
+            icon: const Icon(Icons.rate_review),
+            label: nicheConfig.followUpTabLabel,
           ),
         ],
       ),

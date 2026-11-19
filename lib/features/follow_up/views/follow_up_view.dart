@@ -4,6 +4,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../core/widgets/logout_action.dart';
 import '../../../core/widgets/tutorial_help_action.dart';
+import '../../../widgets/niche_scope.dart';
 import '../controllers/follow_up_controller.dart';
 import '../models/follow_up_model.dart';
 import '../../../modules/customers/domain/entities/customer_entity.dart';
@@ -95,9 +96,10 @@ class _FollowUpViewState extends State<FollowUpView> {
 
   @override
   Widget build(BuildContext context) {
+    final nicheConfig = NicheScope.configOf(context);
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Pós-Venda & Follow-up'),
+        title: Text('${nicheConfig.shortName} - ${nicheConfig.followUpTabLabel}'),
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
@@ -114,6 +116,7 @@ class _FollowUpViewState extends State<FollowUpView> {
               }
             },
           ),
+          const NicheSwitcherAction(),
           const TutorialHelpAction(),
           const LogoutAction(),
         ],
@@ -194,10 +197,10 @@ class _FollowUpViewState extends State<FollowUpView> {
                                   Padding(
                                     padding: const EdgeInsets.only(top: 2.0),
                                     child: Text(
-                                      'Cliente: $customerName',
-                                      style: const TextStyle(
+                                      '${nicheConfig.customerSingular}: $customerName',
+                                      style: TextStyle(
                                         fontSize: 12,
-                                        color: AppColors.primary,
+                                        color: nicheConfig.primaryColor,
                                         fontWeight: FontWeight.w500,
                                       ),
                                     ),
@@ -428,9 +431,10 @@ class _FollowUpFormDialogState extends State<_FollowUpFormDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final nicheConfig = NicheScope.of(context);
     return AlertDialog(
       insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
-      title: const Text('Novo Follow-up'),
+      title: Text('Novo ${nicheConfig.followUpTabLabel}'),
       content: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 480),
         child: SingleChildScrollView(
@@ -443,9 +447,9 @@ class _FollowUpFormDialogState extends State<_FollowUpFormDialog> {
                 builder: (context, _) {
                   final customers = widget.customerController.customers;
                   if (customers.isEmpty) {
-                    return const Text(
-                      'Nenhum cliente cadastrado. Cadastre um cliente primeiro na aba Clientes.',
-                      style: TextStyle(color: AppColors.danger, fontSize: 12),
+                    return Text(
+                      'Nenhum ${nicheConfig.customerSingular.toLowerCase()} cadastrado. Cadastre primeiro na aba ${nicheConfig.customersTabLabel}.',
+                      style: const TextStyle(color: AppColors.danger, fontSize: 12),
                     );
                   }
 
@@ -457,7 +461,9 @@ class _FollowUpFormDialogState extends State<_FollowUpFormDialog> {
                     key: ValueKey(validSelectedId),
                     initialValue: validSelectedId,
                     isExpanded: true,
-                    decoration: const InputDecoration(labelText: 'Cliente *'),
+                    decoration: InputDecoration(
+                      labelText: '${nicheConfig.customerSingular} *',
+                    ),
                     items: customers.map((c) {
                       return DropdownMenuItem<String>(
                         value: c.id,

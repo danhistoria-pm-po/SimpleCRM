@@ -1,5 +1,6 @@
 // lib/features/follow_up/repositories/follow_up_repository.dart
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../../config/niche_config.dart';
 import '../models/follow_up_model.dart';
 
 class FollowUpRepository {
@@ -9,11 +10,13 @@ class FollowUpRepository {
 
   SupabaseClient get _supabase => client ?? Supabase.instance.client;
 
-  Future<List<FollowUpModel>> getFollowUps() async {
+  Future<List<FollowUpModel>> getFollowUps({String? niche}) async {
+    final activeNiche = niche ?? ActiveNicheContext.current;
     try {
       final response = await _supabase
           .from('follow_ups')
           .select('*')
+          .eq('niche', activeNiche)
           .order('scheduled_date', ascending: true);
 
       return (response as List)
@@ -24,9 +27,13 @@ class FollowUpRepository {
     }
   }
 
-  Future<void> addFollowUp(FollowUpModel followUp) async {
+  Future<void> addFollowUp(FollowUpModel followUp, {String? niche}) async {
+    final activeNiche = niche ?? ActiveNicheContext.current;
     try {
-      await _supabase.from('follow_ups').insert(followUp.toMap());
+      await _supabase.from('follow_ups').insert({
+        ...followUp.toMap(),
+        'niche': activeNiche,
+      });
     } catch (e) {
       rethrow;
     }

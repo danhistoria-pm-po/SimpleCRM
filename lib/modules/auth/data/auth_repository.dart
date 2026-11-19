@@ -35,7 +35,12 @@ class AuthRepository {
     required String email,
     required String password,
     bool lgpdConsent = true,
+    String niche = 'simplecrm',
   }) async {
+    final normalizedNiche =
+        niche.trim().isNotEmpty ? niche.trim() : 'simplecrm';
+    final planTier =
+        normalizedNiche == 'simplecrm' ? 'comercio_49' : 'especializado_97';
     try {
       final response = await _supabase.auth.signUp(
         email: email.trim(),
@@ -43,8 +48,26 @@ class AuthRepository {
         data: {
           'lgpd_consent': lgpdConsent,
           'lgpd_consent_at': DateTime.now().toUtc().toIso8601String(),
+          'niche': normalizedNiche,
+          'plan_tier': planTier,
         },
       );
+
+      final userId = response.user?.id;
+      if (userId != null && userId.isNotEmpty) {
+        try {
+          await _supabase.from('profiles').upsert({
+            'id': userId,
+            'email': email.trim(),
+            'niche': normalizedNiche,
+            'plan_tier': planTier,
+          });
+        } catch (_) {
+          // Se o e-mail exigir confirmação prévia (sem sessão ativa no RLS),
+          // os metadados 'niche' e 'plan_tier' já ficam gravados no usuário.
+        }
+      }
+
       return response;
     } on AuthException catch (e) {
       throw Exception(_translateError(e));

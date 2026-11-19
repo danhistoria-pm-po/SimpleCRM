@@ -1,20 +1,37 @@
 // lib/core/theme/app_theme.dart
 import 'package:flutter/material.dart';
+import '../../config/niche_config.dart';
 import 'app_colors.dart';
 
 class AppTheme {
   AppTheme._();
 
-  static ThemeData get lightTheme {
+  static ThemeData get lightTheme => _buildTheme(
+        primary: AppColors.primary,
+        primaryDark: AppColors.primaryDark,
+        primaryLight: AppColors.primaryLight,
+      );
+
+  static ThemeData forNiche(NicheConfig config) => _buildTheme(
+        primary: config.primaryColor,
+        primaryDark: config.primaryDarkColor,
+        primaryLight: config.primaryLightColor,
+      );
+
+  static ThemeData _buildTheme({
+    required Color primary,
+    required Color primaryDark,
+    required Color primaryLight,
+  }) {
     final colorScheme = ColorScheme.fromSeed(
-      seedColor: AppColors.primary,
+      seedColor: primary,
       brightness: Brightness.light,
     ).copyWith(
-      primary: AppColors.primary,
+      primary: primary,
       onPrimary: AppColors.surface,
-      primaryContainer: AppColors.primaryLight,
-      onPrimaryContainer: AppColors.primaryDark,
-      secondary: AppColors.primaryDark,
+      primaryContainer: primaryLight,
+      onPrimaryContainer: primaryDark,
+      secondary: primaryDark,
       onSecondary: AppColors.surface,
       surface: AppColors.surface,
       onSurface: AppColors.textPrimary,
@@ -28,17 +45,17 @@ class AppTheme {
       useMaterial3: true,
       colorScheme: colorScheme,
       scaffoldBackgroundColor: AppColors.background,
-      appBarTheme: const AppBarTheme(
-        backgroundColor: AppColors.primary,
+      appBarTheme: AppBarTheme(
+        backgroundColor: primary,
         foregroundColor: AppColors.surface,
         elevation: 0,
         centerTitle: false,
-        iconTheme: IconThemeData(color: AppColors.surface),
-        actionsIconTheme: IconThemeData(color: AppColors.surface),
+        iconTheme: const IconThemeData(color: AppColors.surface),
+        actionsIconTheme: const IconThemeData(color: AppColors.surface),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.primary,
+          backgroundColor: primary,
           foregroundColor: AppColors.surface,
           elevation: 0,
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -49,8 +66,8 @@ class AppTheme {
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
-          foregroundColor: AppColors.primary,
-          side: const BorderSide(color: AppColors.primary),
+          foregroundColor: primary,
+          side: BorderSide(color: primary),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(10),
           ),
@@ -58,11 +75,11 @@ class AppTheme {
       ),
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
-          foregroundColor: AppColors.primary,
+          foregroundColor: primary,
         ),
       ),
-      floatingActionButtonTheme: const FloatingActionButtonThemeData(
-        backgroundColor: AppColors.primary,
+      floatingActionButtonTheme: FloatingActionButtonThemeData(
+        backgroundColor: primary,
         foregroundColor: AppColors.surface,
       ),
       inputDecorationTheme: InputDecorationTheme(
@@ -81,7 +98,7 @@ class AppTheme {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: AppColors.primary, width: 2),
+          borderSide: BorderSide(color: primary, width: 2),
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
@@ -112,9 +129,9 @@ class AppTheme {
         contentTextStyle: TextStyle(color: AppColors.surface),
         behavior: SnackBarBehavior.floating,
       ),
-      bottomNavigationBarTheme: const BottomNavigationBarThemeData(
+      bottomNavigationBarTheme: BottomNavigationBarThemeData(
         backgroundColor: AppColors.surface,
-        selectedItemColor: AppColors.primary,
+        selectedItemColor: primary,
         unselectedItemColor: AppColors.textSecondary,
         type: BottomNavigationBarType.fixed,
       ),
@@ -124,7 +141,7 @@ class AppTheme {
       checkboxTheme: CheckboxThemeData(
         fillColor: WidgetStateProperty.resolveWith((states) {
           if (states.contains(WidgetState.selected)) {
-            return AppColors.primary;
+            return primary;
           }
           return null;
         }),

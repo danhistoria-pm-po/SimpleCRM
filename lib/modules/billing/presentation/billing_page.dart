@@ -1,9 +1,11 @@
 // lib/modules/billing/presentation/billing_page.dart
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../core/widgets/logout_action.dart';
 import '../../../core/widgets/tutorial_help_action.dart';
+import '../../../widgets/niche_scope.dart';
 import '../controllers/billing_controller.dart';
 import '../models/invoice_entity.dart';
 import '../utils/nf_clipboard_helper.dart';
@@ -95,9 +97,10 @@ class _BillingPageState extends State<BillingPage> {
 
   @override
   Widget build(BuildContext context) {
+    final nicheConfig = NicheScope.configOf(context);
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Gestão de Faturamento & Notas Fiscais'),
+        title: Text('${nicheConfig.shortName} - ${nicheConfig.billingTabLabel}'),
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
@@ -114,6 +117,7 @@ class _BillingPageState extends State<BillingPage> {
             },
             tooltip: 'Atualizar Faturas',
           ),
+          const NicheSwitcherAction(),
           const TutorialHelpAction(),
           const LogoutAction(),
         ],
@@ -195,6 +199,38 @@ class _BillingPageState extends State<BillingPage> {
                             ),
                           ),
                           _buildStatusBadge(invoice.status),
+                          IconButton(
+                            key: ValueKey('btn-copy-invoice-summary-${invoice.id}'),
+                            icon: Icon(
+                              Icons.copy_rounded,
+                              size: 20,
+                              color: nicheConfig.primaryColor,
+                            ),
+                            tooltip: 'Copiar resumo para Recibo/NF',
+                            onPressed: () async {
+                              final customer = _resolveCustomer(invoice);
+                              final summary = [
+                                '${nicheConfig.customerSingular}: ${customer.name}',
+                                'Descrição: ${invoice.customerName}',
+                                'Valor: ${formatCurrency(invoice.amount)}',
+                                'Status: ${_statusLabel(invoice.status)}',
+                                'Vencimento: ${formatDate(invoice.dueDate)}',
+                              ].join('\n');
+                              await Clipboard.setData(
+                                ClipboardData(text: summary),
+                              );
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text(
+                                      'Dados copiados para emissão de recibo/NF!',
+                                    ),
+                                    backgroundColor: AppColors.success,
+                                  ),
+                                );
+                              }
+                            },
+                          ),
                           PopupMenuButton<String>(
                             tooltip: 'Opções da Fatura',
                             onSelected: (value) async {
@@ -309,28 +345,36 @@ class _BillingPageState extends State<BillingPage> {
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _showAddInvoiceModal,
-        icon: const Icon(Icons.post_add),
-        label: const Text('Nova Fatura'),
+        icon: const Icon(Icons.add),
+        label: Text(nicheConfig.newInvoiceLabel),
       ),
     );
   }
 
+  String _statusLabel(InvoiceStatus status) {
+    switch (status) {
+      case InvoiceStatus.pending:
+        return 'Pendente';
+      case InvoiceStatus.paid:
+        return 'Pago';
+      case InvoiceStatus.cancelled:
+        return 'Cancelado';
+    }
+  }
+
   Widget _buildStatusBadge(InvoiceStatus status) {
     Color color;
-    String label;
+    final label = _statusLabel(status);
 
     switch (status) {
       case InvoiceStatus.pending:
         color = AppColors.warning;
-        label = 'Pendente';
         break;
       case InvoiceStatus.paid:
         color = AppColors.success;
-        label = 'Pago';
         break;
       case InvoiceStatus.cancelled:
         color = AppColors.danger;
-        label = 'Cancelado';
         break;
     }
 
@@ -383,9 +427,10 @@ class _InvoiceFormDialogState extends State<_InvoiceFormDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final nicheConfig = NicheScope.of(context);
     return AlertDialog(
       insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
-      title: const Text('Nova Fatura'),
+      title: Text(nicheConfig.newInvoiceLabel),
       content: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 480),
         child: SingleChildScrollView(
@@ -398,9 +443,9 @@ class _InvoiceFormDialogState extends State<_InvoiceFormDialog> {
                 builder: (context, _) {
                   final customers = widget.customerController.customers;
                   if (customers.isEmpty) {
-                    return const Text(
-                      'Nenhum cliente cadastrado. Cadastre um cliente primeiro na aba Clientes.',
-                      style: TextStyle(color: AppColors.danger, fontSize: 12),
+                    return Text(
+                      'Nenhum ${nicheConfig.customerSingular.toLowerCase()} cadastrado. Cadastre primeiro na aba ${nicheConfig.customersTabLabel}.',
+                      style: const TextStyle(color: AppColors.danger, fontSize: 12),
                     );
                   }
 
@@ -412,7 +457,9 @@ class _InvoiceFormDialogState extends State<_InvoiceFormDialog> {
                     key: ValueKey(validSelectedId),
                     initialValue: validSelectedId,
                     isExpanded: true,
-                    decoration: const InputDecoration(labelText: 'Cliente *'),
+                    decoration: InputDecoration(
+                      labelText: '${nicheConfig.customerSingular} *',
+                    ),
                     items: customers.map((c) {
                       return DropdownMenuItem<String>(
                         value: c.id,

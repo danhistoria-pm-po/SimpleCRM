@@ -2,9 +2,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../config/niche_config.dart';
 import '../core/widgets/logout_action.dart';
 import '../models/user_profile.dart';
 import '../services/subscription_service.dart';
+import '../widgets/niche_scope.dart';
 
 const String hotmartCheckoutUrlComercio =
     'https://pay.hotmart.com/SEU_LINK_COMERCIO_49';
@@ -12,10 +14,8 @@ const String hotmartCheckoutUrlEspecializado =
     'https://pay.hotmart.com/SEU_LINK_ESPECIALIZADO_97';
 
 class _PrismaPalette {
-  static const Color primary = Color(0xFF1D4ED8); // Prisma Blue 700
   static const Color primaryDark = Color(0xFF1E3A8A); // Prisma Blue 900
   static const Color primarySoft = Color(0xFFEFF6FF); // Prisma Blue 50
-  static const Color primaryBorder = Color(0xFFBFDBFE); // Prisma Blue 200
   static const Color background = Color(0xFFF8FAFC);
   static const Color surface = Color(0xFFFFFFFF);
   static const Color textPrimary = Color(0xFF0F172A);
@@ -74,13 +74,13 @@ class _TrialAndPaywallScreenState extends State<TrialAndPaywallScreen> {
     super.dispose();
   }
 
+  NicheConfig get _nicheConfig => widget.profile.nicheConfig;
+
   bool get _isComercioPlan => widget.profile.isComercioPlan;
 
-  String get _planPrice => _isComercioPlan ? 'R\$ 49,00/mês' : 'R\$ 97,00/mês';
+  String get _planPrice => _nicheConfig.monthlyPriceLabel;
 
-  String get _planSubtitle => _isComercioPlan
-      ? 'Oferta de Lançamento — Prisma Gestão | SimpleCRM'
-      : 'Plano Profissional — Prisma Gestão';
+  String get _planSubtitle => _nicheConfig.planSubtitle;
 
   String get _checkoutUrl => _isComercioPlan
       ? hotmartCheckoutUrlComercio
@@ -178,7 +178,7 @@ class _TrialAndPaywallScreenState extends State<TrialAndPaywallScreen> {
     }
   }
 
-  Widget _buildPromoCard() {
+  Widget _buildPromoCard(NicheConfig config) {
     return Card(
       margin: EdgeInsets.zero,
       color: _PrismaPalette.surface,
@@ -193,15 +193,15 @@ class _TrialAndPaywallScreenState extends State<TrialAndPaywallScreen> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const Row(
+            Row(
               children: [
                 Icon(
                   Icons.card_giftcard_rounded,
-                  color: _PrismaPalette.primary,
+                  color: config.primaryColor,
                   size: 20,
                 ),
-                SizedBox(width: 8),
-                Expanded(
+                const SizedBox(width: 8),
+                const Expanded(
                   child: Text(
                     'Possui um código de convite? (30 Dias Grátis)',
                     style: TextStyle(
@@ -233,9 +233,9 @@ class _TrialAndPaywallScreenState extends State<TrialAndPaywallScreen> {
                 isDense: true,
                 labelText: 'Código promocional',
                 hintText: 'Ex: PRISMA30',
-                prefixIcon: const Icon(
+                prefixIcon: Icon(
                   Icons.confirmation_number_outlined,
-                  color: _PrismaPalette.primary,
+                  color: config.primaryColor,
                   size: 20,
                 ),
                 filled: true,
@@ -246,8 +246,8 @@ class _TrialAndPaywallScreenState extends State<TrialAndPaywallScreen> {
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
-                  borderSide: const BorderSide(
-                    color: _PrismaPalette.primary,
+                  borderSide: BorderSide(
+                    color: config.primaryColor,
                     width: 2,
                   ),
                 ),
@@ -294,7 +294,7 @@ class _TrialAndPaywallScreenState extends State<TrialAndPaywallScreen> {
               key: const ValueKey('btn-activate-trial'),
               onPressed: _isRedeeming ? null : _handleRedeemPromoCode,
               style: ElevatedButton.styleFrom(
-                backgroundColor: _PrismaPalette.primary,
+                backgroundColor: config.primaryColor,
                 foregroundColor: _PrismaPalette.surface,
                 padding: const EdgeInsets.symmetric(vertical: 12),
                 shape: RoundedRectangleBorder(
@@ -324,15 +324,15 @@ class _TrialAndPaywallScreenState extends State<TrialAndPaywallScreen> {
     );
   }
 
-  Widget _buildPlanCard() {
+  Widget _buildPlanCard(NicheConfig config) {
     return Card(
       margin: EdgeInsets.zero,
       color: _PrismaPalette.surface,
       elevation: 1,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(14),
-        side: const BorderSide(
-          color: _PrismaPalette.primaryBorder,
+        side: BorderSide(
+          color: config.primaryColor.withValues(alpha: 0.35),
           width: 1.5,
         ),
       ),
@@ -342,15 +342,15 @@ class _TrialAndPaywallScreenState extends State<TrialAndPaywallScreen> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const Row(
+            Row(
               children: [
                 Icon(
                   Icons.verified_rounded,
-                  color: _PrismaPalette.primary,
+                  color: config.primaryColor,
                   size: 20,
                 ),
-                SizedBox(width: 8),
-                Expanded(
+                const SizedBox(width: 8),
+                const Expanded(
                   child: Text(
                     'Assinar Plano (Acesso Imediato)',
                     style: TextStyle(
@@ -366,34 +366,36 @@ class _TrialAndPaywallScreenState extends State<TrialAndPaywallScreen> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
               decoration: BoxDecoration(
-                color: _PrismaPalette.primarySoft,
+                color: config.primaryLightColor.withValues(alpha: 0.5),
                 borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: _PrismaPalette.primaryBorder),
+                border: Border.all(
+                  color: config.primaryColor.withValues(alpha: 0.25),
+                ),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     _planPrice,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.bold,
-                      color: _PrismaPalette.primaryDark,
+                      color: config.primaryDarkColor,
                     ),
                   ),
                   const SizedBox(height: 2),
                   Text(
                     _planSubtitle,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 12.5,
                       fontWeight: FontWeight.w600,
-                      color: _PrismaPalette.primary,
+                      color: config.primaryColor,
                     ),
                   ),
                   const SizedBox(height: 6),
-                  const Text(
-                    'Inclui Funil de Vendas (Kanban), Gestão de Clientes, Faturamento, Fluxo de Caixa e Pós-Venda integrados com segurança em nuvem.',
-                    style: TextStyle(
+                  Text(
+                    'Inclui ${config.pipelineEntityPlural}, ${config.customersTabLabel}, ${config.billingTabLabel}, ${config.cashFlowTabLabel} e ${config.followUpTabLabel} integrados com segurança em nuvem.',
+                    style: const TextStyle(
                       fontSize: 12,
                       color: _PrismaPalette.textSecondary,
                       height: 1.35,
@@ -407,7 +409,7 @@ class _TrialAndPaywallScreenState extends State<TrialAndPaywallScreen> {
               key: const ValueKey('btn-subscribe-now'),
               onPressed: _handleOpenCheckout,
               style: ElevatedButton.styleFrom(
-                backgroundColor: _PrismaPalette.primaryDark,
+                backgroundColor: config.primaryDarkColor,
                 foregroundColor: _PrismaPalette.surface,
                 padding: const EdgeInsets.symmetric(vertical: 12),
                 shape: RoundedRectangleBorder(
@@ -428,20 +430,20 @@ class _TrialAndPaywallScreenState extends State<TrialAndPaywallScreen> {
               key: const ValueKey('btn-verify-access'),
               onPressed: _isCheckingAccess ? null : _handleVerifyAccess,
               style: OutlinedButton.styleFrom(
-                foregroundColor: _PrismaPalette.primary,
-                side: const BorderSide(color: _PrismaPalette.primary),
+                foregroundColor: config.primaryColor,
+                side: BorderSide(color: config.primaryColor),
                 padding: const EdgeInsets.symmetric(vertical: 11),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10),
                 ),
               ),
               icon: _isCheckingAccess
-                  ? const SizedBox(
+                  ? SizedBox(
                       height: 15,
                       width: 15,
                       child: CircularProgressIndicator(
                         strokeWidth: 2,
-                        color: _PrismaPalette.primary,
+                        color: config.primaryColor,
                       ),
                     )
                   : const Icon(Icons.refresh, size: 17),
@@ -462,21 +464,23 @@ class _TrialAndPaywallScreenState extends State<TrialAndPaywallScreen> {
   @override
   Widget build(BuildContext context) {
     final canPop = Navigator.of(context).canPop();
+    final config = _nicheConfig;
 
     return Scaffold(
       backgroundColor: _PrismaPalette.background,
       appBar: AppBar(
-        backgroundColor: _PrismaPalette.primaryDark,
+        backgroundColor: config.primaryDarkColor,
         foregroundColor: _PrismaPalette.surface,
         automaticallyImplyLeading: canPop,
         centerTitle: false,
         titleSpacing: canPop ? 0 : 16,
-        title: const Text(
-          'Prisma Gestão — Acesso e Assinatura',
+        title: Text(
+          '${config.appName} — Acesso e Assinatura',
           overflow: TextOverflow.ellipsis,
-          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
         ),
         actions: const [
+          NicheSwitcherAction(),
           Padding(
             padding: EdgeInsets.only(right: 4),
             child: LogoutAction(),
@@ -500,17 +504,17 @@ class _TrialAndPaywallScreenState extends State<TrialAndPaywallScreen> {
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      // Faixa compacta de identificação Prisma Gestão / SimpleCRM
+                      // Faixa compacta de identificação do nicho ativo
                       Container(
                         padding: const EdgeInsets.symmetric(
                           horizontal: 16,
                           vertical: 12,
                         ),
                         decoration: BoxDecoration(
-                          gradient: const LinearGradient(
+                          gradient: LinearGradient(
                             colors: [
-                              _PrismaPalette.primaryDark,
-                              _PrismaPalette.primary,
+                              config.primaryDarkColor,
+                              config.primaryColor,
                             ],
                             begin: Alignment.topLeft,
                             end: Alignment.bottomRight,
@@ -523,18 +527,18 @@ class _TrialAndPaywallScreenState extends State<TrialAndPaywallScreen> {
                           spacing: 12,
                           runSpacing: 4,
                           children: [
-                            const Row(
+                            Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
                                 Icon(
-                                  Icons.workspace_premium_rounded,
+                                  config.icon,
                                   color: _PrismaPalette.surface,
                                   size: 22,
                                 ),
-                                SizedBox(width: 8),
+                                const SizedBox(width: 8),
                                 Text(
-                                  'Prisma Gestão | SimpleCRM',
-                                  style: TextStyle(
+                                  config.appName,
+                                  style: const TextStyle(
                                     color: _PrismaPalette.surface,
                                     fontSize: 16,
                                     fontWeight: FontWeight.bold,
@@ -562,15 +566,15 @@ class _TrialAndPaywallScreenState extends State<TrialAndPaywallScreen> {
                         Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Expanded(child: _buildPromoCard()),
+                            Expanded(child: _buildPromoCard(config)),
                             const SizedBox(width: 16),
-                            Expanded(child: _buildPlanCard()),
+                            Expanded(child: _buildPlanCard(config)),
                           ],
                         )
                       else ...[
-                        _buildPromoCard(),
+                        _buildPromoCard(config),
                         const SizedBox(height: 12),
-                        _buildPlanCard(),
+                        _buildPlanCard(config),
                       ],
                     ],
                   ),

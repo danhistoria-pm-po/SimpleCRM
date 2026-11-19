@@ -76,7 +76,7 @@ class _LoginPageState extends State<LoginPage> {
                     ),
                     const SizedBox(height: 16),
                     const Text(
-                      'SimpleCRM',
+                      'Prisma Gestão',
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         fontSize: 28,
@@ -87,14 +87,24 @@ class _LoginPageState extends State<LoginPage> {
                     ),
                     const SizedBox(height: 8),
                     const Text(
-                      'Gestão comercial simples e direta ao ponto',
+                      'Gestão simples e direta ao ponto para o seu negócio',
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         fontSize: 14,
                         color: AppColors.textSecondary,
                       ),
                     ),
-                    const SizedBox(height: 32),
+                    const SizedBox(height: 8),
+                    const Text(
+                      'SimpleCRM • Clínica • Vet&Pet • Imobiliária • Curso',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                        color: AppColors.primaryDark,
+                      ),
+                    ),
+                    const SizedBox(height: 28),
 
                     // Campo de E-mail
                     TextFormField(
@@ -228,7 +238,7 @@ class _LoginPageState extends State<LoginPage> {
                       onPressed: () => showTutorialVideoModal(context),
                       icon: const Icon(Icons.play_circle_outline, size: 20),
                       label: const Text(
-                        'Assistir Vídeo Tutorial - Imersão SimpleCRM',
+                        'Assistir Vídeo Tutorial - Prisma Gestão',
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           fontSize: 13,

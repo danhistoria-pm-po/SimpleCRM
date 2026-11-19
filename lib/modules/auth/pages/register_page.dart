@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../config/niche_config.dart';
 import '../../../core/theme/app_colors.dart';
 import '../controllers/auth_controller.dart';
 
@@ -20,6 +21,7 @@ class _RegisterPageState extends State<RegisterPage> {
 
   bool _obscurePassword = true;
   bool _acceptedLgpdTerms = false;
+  PrismaNiche _selectedNiche = PrismaNiche.simplecrm;
 
   @override
   void initState() {
@@ -111,6 +113,7 @@ class _RegisterPageState extends State<RegisterPage> {
       final success = await _authController.register(
         _emailController.text.trim(),
         _passwordController.text,
+        niche: _selectedNiche.key,
       );
 
       if (!mounted) return;
@@ -147,7 +150,7 @@ class _RegisterPageState extends State<RegisterPage> {
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24.0),
+            padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 12.0),
             child: Form(
               key: _formKey,
               child: ConstrainedBox(
@@ -158,30 +161,30 @@ class _RegisterPageState extends State<RegisterPage> {
                   children: [
                     const Icon(
                       Icons.person_add_rounded,
-                      size: 64,
+                      size: 48,
                       color: AppColors.primary,
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 10),
                     const Text(
                       'Criar Conta',
                       textAlign: TextAlign.center,
                       style: TextStyle(
-                        fontSize: 28,
+                        fontSize: 26,
                         fontWeight: FontWeight.bold,
                         letterSpacing: -0.5,
                         color: AppColors.textPrimary,
                       ),
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 4),
                     const Text(
-                      'Comece a gerenciar suas vendas hoje mesmo',
+                      'Comece a gerenciar seu negócio hoje mesmo',
                       textAlign: TextAlign.center,
                       style: TextStyle(
-                        fontSize: 14,
+                        fontSize: 13.5,
                         color: AppColors.textSecondary,
                       ),
                     ),
-                    const SizedBox(height: 32),
+                    const SizedBox(height: 20),
 
                     // E-mail
                     TextFormField(
@@ -243,6 +246,47 @@ class _RegisterPageState extends State<RegisterPage> {
                           return 'A senha deve ter pelo menos 6 caracteres';
                         }
                         return null;
+                      },
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Seletor de Módulo / Segmento da Suíte Prisma Gestão
+                    DropdownButtonFormField<PrismaNiche>(
+                      key: const ValueKey('register-niche-dropdown'),
+                      initialValue: _selectedNiche,
+                      isExpanded: true,
+                      decoration: InputDecoration(
+                        labelText: 'Módulo / Segmento',
+                        prefixIcon: Icon(
+                          NicheConfig.fromNiche(_selectedNiche).icon,
+                          color: NicheConfig.fromNiche(_selectedNiche).primaryColor,
+                        ),
+                        filled: true,
+                        fillColor: AppColors.surface,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: const BorderSide(color: AppColors.border),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: const BorderSide(color: AppColors.border),
+                        ),
+                      ),
+                      items: NicheConfig.all.map((config) {
+                        return DropdownMenuItem<PrismaNiche>(
+                          value: config.niche,
+                          child: Text(
+                            '${config.shortName} (${config.monthlyPriceLabel})',
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        );
+                      }).toList(),
+                      onChanged: (value) {
+                        if (value != null) {
+                          setState(() {
+                            _selectedNiche = value;
+                          });
+                        }
                       },
                     ),
                     const SizedBox(height: 16),
