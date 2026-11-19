@@ -4,6 +4,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../core/widgets/logout_action.dart';
 import '../../../core/widgets/tutorial_help_action.dart';
+import '../../../widgets/niche_scope.dart';
 import '../controllers/billing_controller.dart';
 import '../models/invoice_entity.dart';
 import '../utils/nf_clipboard_helper.dart';
@@ -95,9 +96,10 @@ class _BillingPageState extends State<BillingPage> {
 
   @override
   Widget build(BuildContext context) {
+    final nicheConfig = NicheScope.configOf(context);
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Gestão de Faturamento & Notas Fiscais'),
+        title: Text('${nicheConfig.shortName} - ${nicheConfig.billingTabLabel}'),
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
@@ -114,6 +116,7 @@ class _BillingPageState extends State<BillingPage> {
             },
             tooltip: 'Atualizar Faturas',
           ),
+          const NicheSwitcherAction(),
           const TutorialHelpAction(),
           const LogoutAction(),
         ],

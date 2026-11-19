@@ -4,6 +4,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../core/widgets/logout_action.dart';
 import '../../../core/widgets/tutorial_help_action.dart';
+import '../../../widgets/niche_scope.dart';
 import '../controllers/follow_up_controller.dart';
 import '../models/follow_up_model.dart';
 import '../../../modules/customers/domain/entities/customer_entity.dart';
@@ -95,9 +96,10 @@ class _FollowUpViewState extends State<FollowUpView> {
 
   @override
   Widget build(BuildContext context) {
+    final nicheConfig = NicheScope.configOf(context);
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Pós-Venda & Follow-up'),
+        title: Text('${nicheConfig.shortName} - ${nicheConfig.followUpTabLabel}'),
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
@@ -114,6 +116,7 @@ class _FollowUpViewState extends State<FollowUpView> {
               }
             },
           ),
+          const NicheSwitcherAction(),
           const TutorialHelpAction(),
           const LogoutAction(),
         ],

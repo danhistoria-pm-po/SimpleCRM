@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/logout_action.dart';
 import '../../../core/widgets/tutorial_help_action.dart';
+import '../../../widgets/niche_scope.dart';
 import '../domain/entities/customer_entity.dart';
 import 'customer_controller.dart';
 import 'customer_form_modal.dart';
@@ -118,13 +119,14 @@ class _CustomerListPageState extends State<CustomerListPage> {
 
   @override
   Widget build(BuildContext context) {
+    final nicheConfig = NicheScope.configOf(context);
     return Scaffold(
       appBar: AppBar(
-        title: const Text('SimpleCRM - Clientes'),
+        title: Text('${nicheConfig.appName} - ${nicheConfig.customersTabLabel}'),
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
-            tooltip: 'Atualizar Clientes',
+            tooltip: 'Atualizar ${nicheConfig.customersTabLabel}',
             onPressed: () async {
               final ok = await _controller.loadCustomers(silent: true);
               if (!ok && context.mounted && _controller.errorMessage != null) {
@@ -137,6 +139,7 @@ class _CustomerListPageState extends State<CustomerListPage> {
               }
             },
           ),
+          const NicheSwitcherAction(),
           const TutorialHelpAction(),
           const LogoutAction(),
         ],

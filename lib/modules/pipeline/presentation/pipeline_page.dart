@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/logout_action.dart';
 import '../../../core/widgets/tutorial_help_action.dart';
+import '../../../widgets/niche_scope.dart';
 import '../controllers/pipeline_controller.dart';
 import '../models/deal_entity.dart';
 import '../components/pipeline_column.dart';
@@ -165,32 +166,20 @@ class _PipelinePageState extends State<PipelinePage> {
     );
   }
 
-  String _getStageLabel(DealStage stage) {
-    switch (stage) {
-      case DealStage.potential:
-        return 'Potencial';
-      case DealStage.inNegotiation:
-        return 'Em Negociação';
-      case DealStage.proposalSent:
-        return 'Proposta Enviada';
-      case DealStage.activeClient:
-        return 'Cliente Ativo';
-      case DealStage.lost:
-        return 'Perdido';
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
+    final nicheConfig = NicheScope.configOf(context);
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text('SimpleCRM - Funil de Vendas'),
+        title: Text('${nicheConfig.appName} - ${nicheConfig.pipelineEntityPlural}'),
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
-            tooltip: 'Atualizar Pipeline',
+            tooltip: 'Atualizar ${nicheConfig.pipelineTabLabel}',
             onPressed: () => _loadDealsComTratamentoDeErro(silent: true),
           ),
+          const NicheSwitcherAction(),
           const TutorialHelpAction(),
           const LogoutAction(),
         ],
@@ -274,7 +263,7 @@ class _PipelinePageState extends State<PipelinePage> {
                                   ...DealStage.values.map(
                                     (stage) => DropdownMenuItem<DealStage?>(
                                       value: stage,
-                                      child: Text(_getStageLabel(stage)),
+                                      child: Text(nicheConfig.stageLabel(stage)),
                                     ),
                                   ),
                                 ],
@@ -295,7 +284,7 @@ class _PipelinePageState extends State<PipelinePage> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               PipelineColumn(
-                                title: 'Potencial',
+                                title: nicheConfig.stageLabel(DealStage.potential),
                                 stage: DealStage.potential,
                                 deals: _controller.deals
                                     .where((d) => d.stage == DealStage.potential)
@@ -305,7 +294,7 @@ class _PipelinePageState extends State<PipelinePage> {
                                 onDelete: _handleDeleteDeal,
                               ),
                               PipelineColumn(
-                                title: 'Em Negociação',
+                                title: nicheConfig.stageLabel(DealStage.inNegotiation),
                                 stage: DealStage.inNegotiation,
                                 deals: _controller.deals
                                     .where((d) => d.stage == DealStage.inNegotiation)
@@ -315,7 +304,7 @@ class _PipelinePageState extends State<PipelinePage> {
                                 onDelete: _handleDeleteDeal,
                               ),
                               PipelineColumn(
-                                title: 'Proposta Enviada',
+                                title: nicheConfig.stageLabel(DealStage.proposalSent),
                                 stage: DealStage.proposalSent,
                                 deals: _controller.deals
                                     .where((d) => d.stage == DealStage.proposalSent)
@@ -325,7 +314,7 @@ class _PipelinePageState extends State<PipelinePage> {
                                 onDelete: _handleDeleteDeal,
                               ),
                               PipelineColumn(
-                                title: 'Cliente Ativo',
+                                title: nicheConfig.stageLabel(DealStage.activeClient),
                                 stage: DealStage.activeClient,
                                 deals: _controller.deals
                                     .where((d) => d.stage == DealStage.activeClient)
@@ -335,7 +324,7 @@ class _PipelinePageState extends State<PipelinePage> {
                                 onDelete: _handleDeleteDeal,
                               ),
                               PipelineColumn(
-                                title: 'Perdido',
+                                title: nicheConfig.stageLabel(DealStage.lost),
                                 stage: DealStage.lost,
                                 deals: _controller.deals
                                     .where((d) => d.stage == DealStage.lost)
@@ -354,7 +343,7 @@ class _PipelinePageState extends State<PipelinePage> {
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _showAddDealDialog,
         icon: const Icon(Icons.add),
-        label: const Text('Nova Oportunidade'),
+        label: Text(nicheConfig.newDealButtonLabel),
       ),
     );
   }

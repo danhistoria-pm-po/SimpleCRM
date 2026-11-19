@@ -85,4 +85,25 @@ class SubscriptionService {
       };
     }
   }
+
+  /// Atualiza o nicho e o plano correspondente (`comercio_49` ou `especializado_97`)
+  /// na tabela `public.profiles` do usuário autenticado.
+  Future<void> updateNiche(String newNiche) async {
+    final user = _supabase.auth.currentUser;
+    if (user == null) {
+      throw Exception('Usuário não autenticado.');
+    }
+
+    final normalizedNiche =
+        UserProfile.supportedNiches.contains(newNiche.trim())
+            ? newNiche.trim()
+            : 'simplecrm';
+    final newPlanTier =
+        normalizedNiche == 'simplecrm' ? 'comercio_49' : 'especializado_97';
+
+    await _supabase.from('profiles').update({
+      'niche': normalizedNiche,
+      'plan_tier': newPlanTier,
+    }).eq('id', user.id);
+  }
 }
