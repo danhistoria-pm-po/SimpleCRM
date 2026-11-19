@@ -5,11 +5,12 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'core/theme/app_theme.dart';
 import 'features/follow_up/controllers/follow_up_controller.dart';
-import 'home_page.dart';
 import 'modules/auth/pages/login_page.dart';
 import 'modules/billing/controllers/billing_controller.dart';
 import 'modules/cash_flow/controllers/cash_flow_controller.dart';
 import 'modules/customers/presentation/customer_controller.dart';
+import 'services/subscription_service.dart';
+import 'widgets/access_gate.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -48,11 +49,13 @@ class SimpleCRMApp extends StatelessWidget {
 class AuthCheckPage extends StatefulWidget {
   final Stream<AuthState>? authStateStream;
   final Session? Function()? currentSessionGetter;
+  final SubscriptionService? subscriptionService;
 
   const AuthCheckPage({
     super.key,
     this.authStateStream,
     this.currentSessionGetter,
+    this.subscriptionService,
   });
 
   @override
@@ -100,7 +103,12 @@ class _AuthCheckPageState extends State<AuthCheckPage> {
         final session = snapshot.data?.session ?? _currentSession;
 
         if (session != null) {
-          return HomePage(key: ValueKey(session.user.id));
+          return AccessGate(
+            key: ValueKey('access-gate-${session.user.id}'),
+            userId: session.user.id,
+            userEmail: session.user.email,
+            subscriptionService: widget.subscriptionService,
+          );
         } else {
           return const LoginPage();
         }

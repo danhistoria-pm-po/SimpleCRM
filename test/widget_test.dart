@@ -9,6 +9,7 @@ import 'package:simple_crm/features/follow_up/repositories/follow_up_repository.
 import 'package:simple_crm/features/follow_up/views/follow_up_view.dart';
 import 'package:simple_crm/home_page.dart';
 import 'package:simple_crm/main.dart';
+import 'package:simple_crm/models/user_profile.dart';
 import 'package:simple_crm/modules/auth/controllers/auth_controller.dart';
 import 'package:simple_crm/modules/auth/pages/register_page.dart';
 import 'package:simple_crm/modules/customers/domain/entities/customer_entity.dart';
@@ -22,6 +23,9 @@ import 'package:simple_crm/modules/pipeline/controllers/pipeline_controller.dart
 import 'package:simple_crm/modules/pipeline/models/deal_entity.dart';
 import 'package:simple_crm/modules/pipeline/presentation/pipeline_page.dart';
 import 'package:simple_crm/modules/pipeline/repositories/pipeline_repository.dart';
+import 'package:simple_crm/screens/trial_and_paywall_screen.dart';
+import 'package:simple_crm/services/subscription_service.dart';
+import 'package:simple_crm/widgets/access_gate.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class _InMemoryCustomerRepository extends CustomerRepository {
@@ -92,6 +96,27 @@ class _FakeAuthController extends ChangeNotifier implements AuthController {
   @override
   Future<void> logout() async {
     logoutCallCount++;
+  }
+}
+
+class _FakeSubscriptionService extends SubscriptionService {
+  UserProfile profileToReturn;
+  Map<String, dynamic> Function(String code)? onRedeem;
+
+  _FakeSubscriptionService({
+    required this.profileToReturn,
+    this.onRedeem,
+  });
+
+  @override
+  Future<UserProfile?> fetchCurrentProfile() async => profileToReturn;
+
+  @override
+  Future<Map<String, dynamic>> redeemPromoCode(String code) async {
+    if (onRedeem != null) {
+      return onRedeem!(code.trim().toUpperCase());
+    }
+    return {'ok': false, 'error': 'Código inválido'};
   }
 }
 
@@ -336,12 +361,19 @@ void main() {
 
     final sessionA = buildFakeSession('user-a');
     Session? currentSession = sessionA;
+    final fakeSubscription = _FakeSubscriptionService(
+      profileToReturn: const UserProfile(
+        id: 'user-a',
+        isSubscribed: true,
+      ),
+    );
 
     await tester.pumpWidget(
       MaterialApp(
         home: AuthCheckPage(
           authStateStream: authStreamController.stream,
           currentSessionGetter: () => currentSession,
+          subscriptionService: fakeSubscription,
         ),
       ),
     );
@@ -669,5 +701,79 @@ void main() {
       launchedUrl,
       'https://drive.google.com/file/d/1cZTOqHp8ep5uqpEN_34VWIOzUbxrZfkg/view?usp=sharing',
     );
+  });
+
+  testWidgets('AccessGate e TrialAndPaywallScreen: bloqueia sem acesso, ativa PRISMA30 e exibe banner de dias restantes', (
+    WidgetTester tester,
+  ) async {
+    late _FakeSubscriptionService fakeService;
+    fakeService = _FakeSubscriptionService(
+      profileToReturn: const UserProfile(
+        id: 'u1',
+        email: 'teste@prisma.com',
+        niche: 'simplecrm',
+        planTier: 'comercio_49',
+        isSubscribed: false,
+      ),
+      onRedeem: (code) {
+        if (code == 'PRISMA30') {
+          fakeService.profileToReturn = UserProfile(
+            id: 'u1',
+            email: 'teste@prisma.com',
+            niche: 'simplecrm',
+            planTier: 'comercio_49',
+            promoCodeUsed: 'PRISMA30',
+            trialStartedAt: DateTime.now().toUtc(),
+            trialEndsAt: DateTime.now().toUtc().add(const Duration(days: 30)),
+            isSubscribed: false,
+          );
+          return {'ok': true};
+        }
+        return {'ok': false, 'error': 'Código promocional inválido.'};
+      },
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: AccessGate(
+          userId: 'u1',
+          userEmail: 'teste@prisma.com',
+          subscriptionService: fakeService,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // Sem acesso -> exibe TrialAndPaywallScreen com plano Comércio R$ 49,00/mês
+    expect(find.byType(TrialAndPaywallScreen), findsOneWidget);
+    expect(find.text('R\$ 49,00/mês'), findsOneWidget);
+    expect(
+      find.text('Oferta de Lançamento — Prisma Gestão | SimpleCRM'),
+      findsOneWidget,
+    );
+
+    // Código inválido mostra erro em vermelho
+    await tester.enterText(
+      find.byKey(const ValueKey('promo-code-field')),
+      'invalido',
+    );
+    await tester.tap(find.byKey(const ValueKey('btn-activate-trial')));
+    await tester.pumpAndSettle();
+    expect(find.text('Código promocional inválido.'), findsOneWidget);
+
+    // Código válido PRISMA30 libera acesso ao HomePage com banner de 30 dias
+    await tester.enterText(
+      find.byKey(const ValueKey('promo-code-field')),
+      'prisma30',
+    );
+    await tester.tap(find.byKey(const ValueKey('btn-activate-trial')));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(HomePage), findsOneWidget);
+    expect(
+      find.text('Período gratuito ativo: restam 30 dias'),
+      findsOneWidget,
+    );
+    expect(find.text('Assinar'), findsOneWidget);
   });
 }

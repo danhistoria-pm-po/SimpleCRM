@@ -1,14 +1,26 @@
 // lib/home_page.dart
 import 'package:flutter/material.dart';
 import 'core/theme/app_colors.dart';
+import 'models/user_profile.dart';
 import 'modules/pipeline/presentation/pipeline_page.dart';
 import 'modules/customers/presentation/customer_list_page.dart';
 import 'modules/billing/presentation/billing_page.dart';
 import 'modules/cash_flow/presentation/cash_flow_page.dart';
 import 'features/follow_up/views/follow_up_view.dart';
+import 'screens/trial_and_paywall_screen.dart';
+import 'services/subscription_service.dart';
 
 class HomePage extends StatefulWidget {
-  const HomePage({super.key});
+  final UserProfile? profile;
+  final VoidCallback? onRefreshProfile;
+  final SubscriptionService? subscriptionService;
+
+  const HomePage({
+    super.key,
+    this.profile,
+    this.onRefreshProfile,
+    this.subscriptionService,
+  });
 
   @override
   State<HomePage> createState() => _HomePageState();
@@ -26,13 +38,100 @@ class _HomePageState extends State<HomePage> {
     FollowUpView(),
   ];
 
+  void _openSubscriptionScreen() {
+    final profile = widget.profile;
+    if (profile == null) return;
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (routeContext) => TrialAndPaywallScreen(
+          profile: profile,
+          subscriptionService: widget.subscriptionService,
+          onAccessGranted: () {
+            if (Navigator.of(routeContext).canPop()) {
+              Navigator.of(routeContext).pop();
+            }
+            widget.onRefreshProfile?.call();
+          },
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final profile = widget.profile;
+    final showTrialBanner = profile != null &&
+        !profile.isSubscribed &&
+        profile.remainingTrialDays > 0;
+
     return Scaffold(
       // O IndexedStack mantém o estado das páginas vivas enquanto você navega
-      body: IndexedStack(
-        index: _currentIndex,
-        children: _pages,
+      body: Column(
+        children: [
+          if (showTrialBanner)
+            Material(
+              color: const Color(0xFF1E3A8A),
+              child: SafeArea(
+                bottom: false,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 6,
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(
+                        Icons.timer_outlined,
+                        color: AppColors.surface,
+                        size: 18,
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          'Período gratuito ativo: restam ${profile.remainingTrialDays} dias',
+                          style: const TextStyle(
+                            color: AppColors.surface,
+                            fontSize: 13,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                      TextButton(
+                        key: const ValueKey('btn-trial-banner-subscribe'),
+                        onPressed: _openSubscriptionScreen,
+                        style: TextButton.styleFrom(
+                          foregroundColor: AppColors.surface,
+                          backgroundColor: const Color(0xFF2563EB),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 4,
+                          ),
+                          minimumSize: const Size(0, 28),
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        ),
+                        child: const Text(
+                          'Assinar',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          Expanded(
+            child: IndexedStack(
+              index: _currentIndex,
+              children: _pages,
+            ),
+          ),
+        ],
       ),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _currentIndex,
