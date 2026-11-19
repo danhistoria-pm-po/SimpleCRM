@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/formatters.dart';
+import '../../../widgets/niche_scope.dart';
 import '../../customers/domain/entities/customer_entity.dart';
 import '../../customers/presentation/customer_controller.dart';
 import '../models/deal_entity.dart';
@@ -45,9 +46,11 @@ class _DealFormModalState extends State<DealFormModal> {
 
   @override
   Widget build(BuildContext context) {
+    final nicheConfig = NicheScope.of(context);
+
     return AlertDialog(
       insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
-      title: const Text('Nova Oportunidade'),
+      title: Text(nicheConfig.newDealButtonLabel),
       content: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 480),
         child: SingleChildScrollView(
@@ -59,24 +62,26 @@ class _DealFormModalState extends State<DealFormModal> {
               children: [
                 TextFormField(
                   controller: _titleController,
-                  decoration: const InputDecoration(labelText: 'Título da Oportunidade'),
+                  decoration: InputDecoration(
+                    labelText: nicheConfig.dealTitleFieldLabel,
+                  ),
                   validator: (value) =>
                       value == null || value.trim().isEmpty ? 'Informe o título' : null,
                 ),
                 const SizedBox(height: 12),
 
-                // Seletor Dinâmico de Clientes Cadastrados por ID (String)
+                // Seletor Dinâmico de Clientes/Pacientes Cadastrados por ID (String)
                 AnimatedBuilder(
                   animation: widget.customerController,
                   builder: (context, child) {
                     final customers = widget.customerController.customers;
 
                     if (customers.isEmpty) {
-                      return const Padding(
-                        padding: EdgeInsets.symmetric(vertical: 8.0),
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 8.0),
                         child: Text(
-                          'Nenhum cliente cadastrado. Cadastre um cliente primeiro na aba Clientes.',
-                          style: TextStyle(color: AppColors.danger, fontSize: 12),
+                          'Nenhum ${nicheConfig.customerSingular.toLowerCase()} cadastrado. Cadastre primeiro na aba ${nicheConfig.customersTabLabel}.',
+                          style: const TextStyle(color: AppColors.danger, fontSize: 12),
                         ),
                       );
                     }
@@ -89,7 +94,9 @@ class _DealFormModalState extends State<DealFormModal> {
                       key: ValueKey(validSelectedId),
                       initialValue: validSelectedId,
                       isExpanded: true,
-                      decoration: const InputDecoration(labelText: 'Selecione o Cliente'),
+                      decoration: InputDecoration(
+                        labelText: 'Selecione o ${nicheConfig.customerSingular}',
+                      ),
                       items: customers.map((customer) {
                         return DropdownMenuItem<String>(
                           value: customer.id,
@@ -104,8 +111,9 @@ class _DealFormModalState extends State<DealFormModal> {
                           _selectedCustomerId = customerId;
                         });
                       },
-                      validator: (value) =>
-                          value == null || value.isEmpty ? 'Selecione um cliente' : null,
+                      validator: (value) => value == null || value.isEmpty
+                          ? 'Selecione um ${nicheConfig.customerSingular.toLowerCase()}'
+                          : null,
                     );
                   },
                 ),
@@ -130,7 +138,7 @@ class _DealFormModalState extends State<DealFormModal> {
                     return DropdownMenuItem(
                       value: stage,
                       child: Text(
-                        _getStageLabel(stage),
+                        nicheConfig.stageLabel(stage),
                         overflow: TextOverflow.ellipsis,
                       ),
                     );
@@ -178,20 +186,5 @@ class _DealFormModalState extends State<DealFormModal> {
         ),
       ],
     );
-  }
-
-  String _getStageLabel(DealStage stage) {
-    switch (stage) {
-      case DealStage.potential:
-        return 'Potencial';
-      case DealStage.inNegotiation:
-        return 'Em Negociação';
-      case DealStage.proposalSent:
-        return 'Proposta Enviada';
-      case DealStage.activeClient:
-        return 'Cliente Ativo';
-      case DealStage.lost:
-        return 'Perdido';
-    }
   }
 }

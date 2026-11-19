@@ -1,6 +1,7 @@
 // lib/core/widgets/tutorial_help_action.dart
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import '../../widgets/niche_scope.dart';
 import '../theme/app_colors.dart';
 import '../utils/url_opener.dart';
 
@@ -44,16 +45,17 @@ class TutorialVideoModal extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final nicheConfig = NicheScope.of(context);
     return AlertDialog(
       insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
-      title: const Row(
+      title: Row(
         children: [
-          Icon(Icons.ondemand_video, color: AppColors.primary),
-          SizedBox(width: 10),
+          Icon(Icons.ondemand_video, color: nicheConfig.primaryColor),
+          const SizedBox(width: 10),
           Expanded(
             child: Text(
-              'Ajuda — Imersão SimpleCRM',
-              style: TextStyle(
+              'Ajuda — Imersão ${nicheConfig.shortName}',
+              style: const TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
                 color: AppColors.textPrimary,
@@ -72,37 +74,39 @@ class TutorialVideoModal extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: AppColors.primaryLight,
+                  color: nicheConfig.primaryColor.withValues(alpha: 0.10),
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: AppColors.border),
+                  border: Border.all(
+                    color: nicheConfig.primaryColor.withValues(alpha: 0.30),
+                  ),
                 ),
-                child: const Column(
+                child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Row(
                       children: [
                         Icon(
                           Icons.play_circle_fill,
-                          color: AppColors.primaryDark,
+                          color: nicheConfig.primaryDarkColor,
                           size: 28,
                         ),
-                        SizedBox(width: 10),
+                        const SizedBox(width: 10),
                         Expanded(
                           child: Text(
-                            'Vídeo Tutorial de Imersão',
+                            'Vídeo Tutorial de Imersão — ${nicheConfig.shortName}',
                             style: TextStyle(
                               fontSize: 15,
                               fontWeight: FontWeight.bold,
-                              color: AppColors.primaryDark,
+                              color: nicheConfig.primaryDarkColor,
                             ),
                           ),
                         ),
                       ],
                     ),
-                    SizedBox(height: 8),
+                    const SizedBox(height: 8),
                     Text(
-                      'Aprenda passo a passo como gerenciar seus clientes, movimentar oportunidades no Funil de Vendas (Kanban), emitir cobranças no Faturamento, controlar o Fluxo de Caixa e registrar o Pós-Venda.',
-                      style: TextStyle(
+                      'Aprenda passo a passo como gerenciar ${nicheConfig.customersTabLabel}, movimentar ${nicheConfig.pipelineEntityPlural} no Kanban, emitir ${nicheConfig.billingTabLabel}, controlar o ${nicheConfig.cashFlowTabLabel} e acompanhar ${nicheConfig.followUpTabLabel}.',
+                      style: const TextStyle(
                         fontSize: 13,
                         color: AppColors.textPrimary,
                         height: 1.4,
@@ -114,13 +118,17 @@ class TutorialVideoModal extends StatelessWidget {
               const SizedBox(height: 16),
               ElevatedButton.icon(
                 key: const ValueKey('btn-modal-watch-tutorial'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: nicheConfig.primaryColor,
+                  foregroundColor: AppColors.surface,
+                ),
                 onPressed: () => launchTutorialVideo(
                   context,
                   urlLauncher: urlLauncher,
                 ),
                 icon: const Icon(Icons.open_in_new, size: 18),
-                label: const Text(
-                  'Assistir Vídeo Tutorial - Imersão SimpleCRM',
+                label: Text(
+                  'Assistir Vídeo Tutorial - Imersão ${nicheConfig.shortName}',
                   textAlign: TextAlign.center,
                 ),
               ),
@@ -154,10 +162,10 @@ class TutorialVideoModal extends StatelessWidget {
                       ),
                     ),
                     IconButton(
-                      icon: const Icon(
+                      icon: Icon(
                         Icons.copy,
                         size: 18,
-                        color: AppColors.primary,
+                        color: nicheConfig.primaryColor,
                       ),
                       tooltip: 'Copiar link do vídeo',
                       onPressed: () async {
@@ -215,12 +223,15 @@ class TutorialQuickAccessBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final nicheConfig = NicheScope.of(context);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        color: AppColors.primaryLight,
+        color: nicheConfig.primaryColor.withValues(alpha: 0.10),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.border),
+        border: Border.all(
+          color: nicheConfig.primaryColor.withValues(alpha: 0.30),
+        ),
       ),
       child: Wrap(
         alignment: WrapAlignment.spaceBetween,
@@ -228,22 +239,22 @@ class TutorialQuickAccessBanner extends StatelessWidget {
         spacing: 12,
         runSpacing: 8,
         children: [
-          const Row(
+          Row(
             mainAxisSize: MainAxisSize.min,
             children: [
               Icon(
                 Icons.ondemand_video,
-                color: AppColors.primaryDark,
+                color: nicheConfig.primaryDarkColor,
                 size: 20,
               ),
-              SizedBox(width: 8),
+              const SizedBox(width: 8),
               Flexible(
                 child: Text(
                   'Novo por aqui? Conheça o passo a passo completo do sistema.',
                   style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
-                    color: AppColors.primaryDark,
+                    color: nicheConfig.primaryDarkColor,
                   ),
                 ),
               ),
@@ -252,7 +263,7 @@ class TutorialQuickAccessBanner extends StatelessWidget {
           ElevatedButton.icon(
             key: const ValueKey('btn-banner-watch-tutorial'),
             style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primary,
+              backgroundColor: nicheConfig.primaryColor,
               foregroundColor: AppColors.surface,
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
               visualDensity: VisualDensity.compact,
@@ -266,9 +277,9 @@ class TutorialQuickAccessBanner extends StatelessWidget {
               );
             },
             icon: const Icon(Icons.play_circle_outline, size: 18),
-            label: const Text(
-              'Assistir Vídeo Tutorial - Imersão SimpleCRM',
-              style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+            label: Text(
+              'Assistir Vídeo Tutorial - Imersão ${nicheConfig.shortName}',
+              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
             ),
           ),
         ],

@@ -21,6 +21,8 @@ class NicheScope extends InheritedWidget {
     return maybeOf(context)?.config ?? NicheConfig.simplecrm;
   }
 
+  static NicheConfig of(BuildContext context) => configOf(context);
+
   @override
   bool updateShouldNotify(NicheScope oldWidget) {
     return config.niche != oldWidget.config.niche;

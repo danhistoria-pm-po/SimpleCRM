@@ -74,7 +74,31 @@ class _LoginPageState extends State<LoginPage> {
                       size: 64,
                       color: AppColors.primary,
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 12),
+                    Center(
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppColors.primaryLight,
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(
+                            color: AppColors.primary.withValues(alpha: 0.25),
+                          ),
+                        ),
+                        child: const Text(
+                          'Ecossistema Prisma Gestão',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.primaryDark,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
                     const Text(
                       'SimpleCRM',
                       textAlign: TextAlign.center,

@@ -1,5 +1,6 @@
 // lib/modules/customers/presentation/customer_form_modal.dart
 import 'package:flutter/material.dart';
+import '../../../widgets/niche_scope.dart';
 import '../domain/entities/customer_entity.dart';
 
 class CustomerFormModal extends StatefulWidget {
@@ -55,9 +56,14 @@ class _CustomerFormModalState extends State<CustomerFormModal> {
   @override
   Widget build(BuildContext context) {
     final isEditing = widget.initialCustomer != null;
+    final nicheConfig = NicheScope.of(context);
     return AlertDialog(
       insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
-      title: Text(isEditing ? 'Editar Cliente' : 'Novo Cliente'),
+      title: Text(
+        isEditing
+            ? 'Editar ${nicheConfig.customerSingular}'
+            : nicheConfig.newCustomerLabel,
+      ),
       content: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 480),
         child: SingleChildScrollView(

@@ -178,11 +178,11 @@ class _CustomerListPageState extends State<CustomerListPage> {
           }
 
           if (customers.isEmpty) {
-            return const Center(
+            return Center(
               child: Text(
-                'Nenhum cliente cadastrado ainda.\nClique no botão abaixo para adicionar.',
+                'Nenhum ${nicheConfig.customerSingular.toLowerCase()} cadastrado ainda.\nClique no botão abaixo para adicionar.',
                 textAlign: TextAlign.center,
-                style: TextStyle(color: AppColors.textSecondary, fontSize: 16),
+                style: const TextStyle(color: AppColors.textSecondary, fontSize: 16),
               ),
             );
           }
@@ -242,16 +242,16 @@ class _CustomerListPageState extends State<CustomerListPage> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       IconButton(
-                        icon: const Icon(
+                        icon: Icon(
                           Icons.edit_outlined,
-                          color: AppColors.primary,
+                          color: nicheConfig.primaryColor,
                         ),
-                        tooltip: 'Editar Cliente',
+                        tooltip: 'Editar ${nicheConfig.customerSingular}',
                         onPressed: () => _showEditCustomerDialog(customer),
                       ),
                       IconButton(
                         icon: const Icon(Icons.delete, color: AppColors.danger),
-                        tooltip: 'Excluir Cliente',
+                        tooltip: 'Excluir ${nicheConfig.customerSingular}',
                         onPressed: () async {
                           final confirmed =
                               await _confirmDeleteCustomer(customer.name);
@@ -263,7 +263,7 @@ class _CustomerListPageState extends State<CustomerListPage> {
                               SnackBar(
                                 content: Text(
                                   _controller.errorMessage ??
-                                      'Erro ao excluir cliente.',
+                                      'Erro ao excluir ${nicheConfig.customerSingular.toLowerCase()}.',
                                 ),
                                 backgroundColor: AppColors.danger,
                               ),
@@ -282,7 +282,7 @@ class _CustomerListPageState extends State<CustomerListPage> {
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _showAddCustomerDialog,
         icon: const Icon(Icons.person_add),
-        label: const Text('Novo Cliente'),
+        label: Text(nicheConfig.newCustomerLabel),
       ),
     );
   }

@@ -47,6 +47,13 @@ class NicheConfig {
   final String followUpTabLabel;
   final String newDealButtonLabel;
 
+  // Rótulos singulares e de formulários
+  final String customerSingular;
+  final String newCustomerLabel;
+  final String dealSingular;
+  final String invoiceSingular;
+  final String dealTitleFieldLabel;
+
   // Rótulos das etapas do Kanban (mantendo os mesmos valores internos de DealStage no Supabase)
   final Map<DealStage, String> stageLabels;
 
@@ -68,6 +75,11 @@ class NicheConfig {
     required this.cashFlowTabLabel,
     required this.followUpTabLabel,
     required this.newDealButtonLabel,
+    required this.customerSingular,
+    required this.newCustomerLabel,
+    required this.dealSingular,
+    required this.invoiceSingular,
+    required this.dealTitleFieldLabel,
     required this.stageLabels,
   });
 
@@ -95,6 +107,11 @@ class NicheConfig {
     cashFlowTabLabel: 'Caixa',
     followUpTabLabel: 'Pós-Venda',
     newDealButtonLabel: 'Nova Oportunidade',
+    customerSingular: 'Cliente',
+    newCustomerLabel: 'Novo Cliente',
+    dealSingular: 'Oportunidade',
+    invoiceSingular: 'Fatura',
+    dealTitleFieldLabel: 'Título da Oportunidade',
     stageLabels: {
       DealStage.potential: 'Potencial',
       DealStage.inNegotiation: 'Em Negociação',
@@ -122,6 +139,11 @@ class NicheConfig {
     cashFlowTabLabel: 'Caixa',
     followUpTabLabel: 'Retornos',
     newDealButtonLabel: 'Novo Orçamento',
+    customerSingular: 'Paciente',
+    newCustomerLabel: 'Novo Paciente',
+    dealSingular: 'Orçamento / Tratamento',
+    invoiceSingular: 'Recibo / Fatura',
+    dealTitleFieldLabel: 'Título do Orçamento / Tratamento',
     stageLabels: {
       DealStage.potential: 'Triagem / Contato',
       DealStage.inNegotiation: 'Avaliação Agendada',
@@ -149,6 +171,11 @@ class NicheConfig {
     cashFlowTabLabel: 'Caixa',
     followUpTabLabel: 'Vacinas & Retornos',
     newDealButtonLabel: 'Novo Atendimento',
+    customerSingular: 'Pet / Tutor',
+    newCustomerLabel: 'Novo Pet / Tutor',
+    dealSingular: 'Atendimento',
+    invoiceSingular: 'Fatura / Atendimento',
+    dealTitleFieldLabel: 'Título do Atendimento',
     stageLabels: {
       DealStage.potential: 'Novo Contato',
       DealStage.inNegotiation: 'Triagem / Agendado',
@@ -176,6 +203,11 @@ class NicheConfig {
     cashFlowTabLabel: 'Caixa',
     followUpTabLabel: 'Pós-Venda',
     newDealButtonLabel: 'Nova Proposta',
+    customerSingular: 'Interessado',
+    newCustomerLabel: 'Novo Interessado',
+    dealSingular: 'Proposta',
+    invoiceSingular: 'Comissão / Contrato',
+    dealTitleFieldLabel: 'Título da Proposta',
     stageLabels: {
       DealStage.potential: 'Novo Lead',
       DealStage.inNegotiation: 'Visita Agendada',

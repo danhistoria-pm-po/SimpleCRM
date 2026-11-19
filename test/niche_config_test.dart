@@ -25,6 +25,10 @@ void main() {
       expect(simplecrm.cashFlowTabLabel, 'Caixa');
       expect(simplecrm.followUpTabLabel, 'Pós-Venda');
       expect(simplecrm.newDealButtonLabel, 'Nova Oportunidade');
+      expect(simplecrm.customerSingular, 'Cliente');
+      expect(simplecrm.newCustomerLabel, 'Novo Cliente');
+      expect(simplecrm.dealSingular, 'Oportunidade');
+      expect(simplecrm.invoiceSingular, 'Fatura');
       expect(simplecrm.stageLabel(DealStage.activeClient), 'Cliente Ativo');
 
       // 2. Clínica
@@ -41,6 +45,10 @@ void main() {
       expect(clinica.cashFlowTabLabel, 'Caixa');
       expect(clinica.followUpTabLabel, 'Retornos');
       expect(clinica.newDealButtonLabel, 'Novo Orçamento');
+      expect(clinica.customerSingular, 'Paciente');
+      expect(clinica.newCustomerLabel, 'Novo Paciente');
+      expect(clinica.dealSingular, 'Orçamento / Tratamento');
+      expect(clinica.invoiceSingular, 'Recibo / Fatura');
       expect(clinica.stageLabel(DealStage.activeClient), 'Em Tratamento');
 
       // 3. Vet&Pet
@@ -57,6 +65,10 @@ void main() {
       expect(vetPet.cashFlowTabLabel, 'Caixa');
       expect(vetPet.followUpTabLabel, 'Vacinas & Retornos');
       expect(vetPet.newDealButtonLabel, 'Novo Atendimento');
+      expect(vetPet.customerSingular, 'Pet / Tutor');
+      expect(vetPet.newCustomerLabel, 'Novo Pet / Tutor');
+      expect(vetPet.dealSingular, 'Atendimento');
+      expect(vetPet.invoiceSingular, 'Fatura / Atendimento');
       expect(vetPet.stageLabel(DealStage.activeClient), 'Em Atendimento');
 
       // 4. Imobiliária
@@ -73,6 +85,10 @@ void main() {
       expect(imobiliaria.cashFlowTabLabel, 'Caixa');
       expect(imobiliaria.followUpTabLabel, 'Pós-Venda');
       expect(imobiliaria.newDealButtonLabel, 'Nova Proposta');
+      expect(imobiliaria.customerSingular, 'Interessado');
+      expect(imobiliaria.newCustomerLabel, 'Novo Interessado');
+      expect(imobiliaria.dealSingular, 'Proposta');
+      expect(imobiliaria.invoiceSingular, 'Comissão / Contrato');
       expect(imobiliaria.stageLabel(DealStage.activeClient), 'Contrato Fechado');
     });
 
